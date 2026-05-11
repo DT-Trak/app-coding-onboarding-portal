@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<!--
+  DT-TRAK MEDICAL CODER TRAINING PORTAL
+  Page: Training Checklist (05)
+  ─────────────────────────────────────────────────────────────────────────
+  Source: Training Check List - New Employee Coding IHS.pdf (R: 4/1/26)
+  ─────────────────────────────────────────────────────────────────────────
+  POWER PAGES INSTRUCTIONS:
+  1. In Power Pages Studio → Pages → Add Page → "Custom Layout"
+  2. Name the page "Training Checklist"
+  3. Add a "Custom HTML" component and paste <body>...</body> content
+  4. Replace localStorage calls with Dataverse/SharePoint API calls when wiring live
+  5. The employee name should come from the logged-in Azure AD user ({{user.fullname}})
+  ─────────────────────────────────────────────────────────────────────────
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DT-Trak Training Portal — Training Checklist</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --dt-navy:      #1F3864;
+      --dt-blue:      #2E75B6;
+      --dt-blue-lt:   #D6E4F0;
+      --dt-green:     #375623;
+      --dt-green-lt:  #E2EFDA;
+      --dt-orange:    #C55A11;
+      --dt-red:       #C00000;
+      --dt-gold:      #BF8F00;
+      --dt-bg:        #F0F4FA;
+      --dt-white:     #FFFFFF;
+      --dt-gray:      #6C757D;
+      --dt-border:    #DEE2E6;
+      --dt-shadow:    0 2px 8px rgba(31,56,100,.10);
+    }
+    * { font-family: 'Inter', sans-serif; }
+    body { background: var(--dt-bg); margin: 0; }
+
+    /* ── Top Nav ── */
+    .portal-nav {
+      background: var(--dt-navy);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    .portal-nav .brand {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: .3px;
+      text-decoration: none;
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .portal-nav .brand .badge-portal {
+      background: var(--dt-blue);
+      font-size: .65rem;
+      font-weight: 600;
+      padding: .2rem .5rem;
+      border-radius: 3px;
+      letter-spacing: .4px;
+    }
+    .nav-links { display: flex; gap: .2rem; }
+    .nav-links a {
+      color: rgba(255,255,255,.78);
+      text-decoration: none;
+      padding: .4rem .75rem;
+      border-radius: 4px;
+      font-size: .85rem;
+      font-weight: 500;
+      transition: background .15s, color .15s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      background: rgba(255,255,255,.12);
+      color: #fff;
+    }
+    .nav-user {
+      display: flex; align-items: center; gap: .75rem;
+      color: rgba(255,255,255,.85);
+      font-size: .85rem;
+    }
+    .nav-user .avatar {
+      width: 32px; height: 32px;
+      background: var(--dt-blue);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .85rem; color: #fff;
+    }
+
+    /* ── Page Banner ── */
+    .page-banner {
+      background: linear-gradient(135deg, var(--dt-navy) 0%, var(--dt-blue) 100%);
+      color: #fff;
+      padding: 1.75rem 2rem 1.5rem;
+    }
+    .page-banner h1 { font-size: 1.4rem; font-weight: 700; margin: 0 0 .2rem; }
+    .page-banner p { opacity: .82; margin: 0; font-size: .92rem; }
+
+    /* ── Status Widget ── */
+    .status-widget {
+      background: rgba(255,255,255,.13);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-top: 1.25rem;
+      display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+    }
+    .sw-stat { text-align: center; min-width: 70px; }
+    .sw-stat .num { font-size: 1.75rem; font-weight: 700; line-height: 1; }
+    .sw-stat .lbl { font-size: .68rem; opacity: .8; margin-top: .15rem; letter-spacing: .3px; text-transform: uppercase; }
+    .sw-sections { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; flex: 1; }
+    .sw-sec-dot {
+      display: flex; align-items: center; gap: .3rem;
+      font-size: .72rem; font-weight: 500;
+      background: rgba(255,255,255,.1);
+      border-radius: 20px; padding: .25rem .6rem;
+      white-space: nowrap;
+    }
+    .sw-sec-dot .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: rgba(255,255,255,.35); flex-shrink: 0;
+    }
+    .sw-sec-dot.done .dot { background: #4BC98A; }
+    .sw-sec-dot.done { background: rgba(75,201,138,.18); }
+    .sw-sec-dot.partial .dot { background: #FCD34D; }
+    .sw-bar-wrap { flex: 1; min-width: 220px; }
+    .sw-bar-label { font-size: .78rem; opacity: .85; margin-bottom: .35rem; }
+    .sw-bar { height: 10px; background: rgba(255,255,255,.2); border-radius: 5px; overflow: hidden; }
+    .sw-bar .fill { height: 100%; border-radius: 5px; background: #4BC98A; transition: width .4s; }
+
+    /* ── Main ── */
+    .portal-main { padding: 1.5rem 2rem; max-width: 960px; margin: 0 auto; }
+    @media (max-width: 768px) { .portal-main { padding: 1rem; } }
+
+    /* ── Section Card ── */
+    .cl-section {
+      background: var(--dt-white);
+      border-radius: 10px;
+      box-shadow: var(--dt-shadow);
+      margin-bottom: 12px;
+      overflow: hidden;
+    }
+    .cl-sec-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: .9rem 1.25rem;
+      background: var(--dt-white);
+      border-bottom: 1px solid var(--dt-border);
+      cursor: pointer; user-select: none;
+      transition: background .12s;
+    }
+    .cl-sec-header:hover { background: #F8FAFC; }
+    .cl-sec-left { display: flex; align-items: center; gap: .75rem; }
+    .cl-sec-icon { font-size: 1.15rem; }
+    .cl-sec-name { font-size: .92rem; font-weight: 600; color: var(--dt-navy); }
+    .cl-sec-mini-bar {
+      width: 100px; height: 5px; border-radius: 3px;
+      background: #E9ECEF; overflow: hidden; margin-top: .25rem;
+    }
+    .cl-sec-mini-fill { height: 100%; border-radius: 3px; background: var(--dt-blue); transition: width .3s; }
+    .cl-sec-right { display: flex; align-items: center; gap: .75rem; }
+    .cl-sec-badge {
+      font-size: .72rem; font-weight: 600;
+      padding: .2rem .65rem; border-radius: 20px;
+      background: #F1F3F5; color: var(--dt-gray);
+    }
+    .cl-sec-badge.all-done { background: var(--dt-green-lt); color: var(--dt-green); }
+    .cl-sec-badge.partial  { background: #FFF3CD; color: var(--dt-gold); }
+    .cl-chevron { color: var(--dt-gray); transition: transform .2s; font-size: .9rem; }
+    .cl-chevron.open { transform: rotate(90deg); }
+
+    /* ── Checklist Items ── */
+    .cl-items { padding: .25rem 0; }
+    .cl-item {
+      display: flex; align-items: flex-start; gap: .75rem;
+      padding: .7rem 1.25rem;
+      border-bottom: 1px solid #F0F4F8;
+      cursor: pointer;
+      transition: background .1s;
+    }
+    .cl-item:last-child { border-bottom: none; }
+    .cl-item:hover { background: #F8FAFC; }
+    .cl-item.checked { background: #F0FDF4; }
+    .cl-cb {
+      width: 20px; height: 20px; border-radius: 5px;
+      border: 2px solid var(--dt-border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; flex-shrink: 0; margin-top: 1px;
+      transition: all .15s;
+    }
+    .cl-item.checked .cl-cb {
+      background: var(--dt-green); border-color: var(--dt-green); color: #fff;
+    }
+    .cl-item-text {
+      font-size: .87rem; line-height: 1.45; color: var(--dt-navy);
+    }
+    .cl-item.checked .cl-item-text {
+      text-decoration: line-through; color: var(--dt-gray);
+    }
+
+    /* ── Section Heading ── */
+    .sec-heading {
+      font-size: .78rem; font-weight: 700; letter-spacing: .5px;
+      text-transform: uppercase; color: var(--dt-navy);
+      margin: 1.5rem 0 .75rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .sec-heading::after {
+      content: ''; flex: 1; height: 1px; background: var(--dt-border);
+    }
+    .sec-heading:first-child { margin-top: 0; }
+
+    /* ── Print / Reset button ── */
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: .6rem;
+      margin-bottom: 1.25rem;
+    }
+    .toolbar-left { display: flex; align-items: center; gap: .6rem; font-size: .85rem; color: var(--dt-gray); }
+    .btn-reset {
+      background: none; border: 1.5px solid #fca5a5; color: #dc2626;
+      border-radius: 7px; padding: .4rem .9rem; font-size: .8rem;
+      font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: background .12s;
+    }
+    .btn-reset:hover { background: #fef2f2; }
+    .btn-expand-all {
+      background: none; border: 1.5px solid var(--dt-border); color: var(--dt-gray);
+      border-radius: 7px; padding: .4rem .9rem; font-size: .8rem;
+      font-weight: 500; cursor: pointer; font-family: inherit;
+      transition: background .12s;
+    }
+    .btn-expand-all:hover { background: var(--dt-blue-lt); border-color: var(--dt-blue); color: var(--dt-blue); }
+
+    /* ── Completion Banner ── */
+    .complete-banner {
+      display: none; background: var(--dt-green-lt); border: 1.5px solid var(--dt-green);
+      border-radius: 10px; padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+      display: none; align-items: center; gap: .75rem; color: var(--dt-green);
+      font-weight: 600;
+    }
+    .complete-banner.show { display: flex; }
+    .complete-banner i { font-size: 1.4rem; }
+
+    /* ── Footer ── */
+    .portal-footer {
+      text-align: center; padding: 1.5rem;
+      font-size: .75rem; color: var(--dt-gray);
+      border-top: 1px solid var(--dt-border);
+      margin-top: 2rem;
+    }
+
+    @media print {
+      .portal-nav, .toolbar, .btn-reset, .btn-expand-all { display: none !important; }
+      .cl-section { box-shadow: none; border: 1px solid #ccc; }
+      .cl-sec-header { cursor: default; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Nav ── -->
+<nav class="portal-nav">
+  <a class="brand" href="01-dashboard.html">
+    <i class="bi bi-grid-3x3-gap-fill"></i>
+    DT-Trak Training Portal
+    <span class="badge-portal">DEMO</span>
+  </a>
+  <div class="nav-links d-none d-md-flex">
+    <a href="01-dashboard.html"><i class="bi bi-house-fill me-1"></i>Dashboard</a>
+    <a href="02-modules.html"><i class="bi bi-collection-play me-1"></i>Modules</a>
+    <a href="05-checklist.html" class="active"><i class="bi bi-check2-square me-1"></i>Checklist</a>
+    <a href="04-resources.html"><i class="bi bi-link-45deg me-1"></i>Resources</a>
+  </div>
+  <div class="nav-user">
+    <div class="avatar" id="nav-avatar">?</div>
+    <span id="nav-name">Employee</span>
+  </div>
+</nav>
+
+<!-- ── Page Banner ── -->
+<div class="page-banner">
+  <h1><i class="bi bi-check2-all me-2"></i>New Employee Training Checklist</h1>
+  <p>Complete each section with your trainer. All items must be checked off before independent coding begins.</p>
+
+  <!-- Status Widget -->
+  <div class="status-widget">
+    <div class="sw-stat">
+      <div class="num" id="sw-done">0</div>
+      <div class="lbl">Completed</div>
+    </div>
+    <div class="sw-stat">
+      <div class="num" id="sw-total">0</div>
+      <div class="lbl">Total Items</div>
+    </div>
+    <div class="sw-stat">
+      <div class="num" id="sw-secs">0/7</div>
+      <div class="lbl">Sections Done</div>
+    </div>
+    <div class="sw-sections" id="sw-sections"></div>
+    <div class="sw-bar-wrap">
+      <div class="sw-bar-label" id="sw-bar-label">0% complete</div>
+      <div class="sw-bar"><div class="fill" id="sw-bar-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Main ── -->
+<main class="portal-main">
+
+  <!-- Completion Banner -->
+  <div class="complete-banner" id="complete-banner">
+    <i class="bi bi-patch-check-fill"></i>
+    <span>🎉 All checklist items complete! Please obtain trainer signatures and return the completed checklist to the Administrator of Health Information Operations.</span>
+  </div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <i class="bi bi-person-fill" style="color:var(--dt-blue)"></i>
+      <span>Checklist for: <strong id="emp-name-display">Loading…</strong></span>
+    </div>
+    <div style="display:flex;gap:.5rem;">
+      <button class="btn-expand-all" onclick="toggleAll()"><i class="bi bi-arrows-expand me-1"></i><span id="expand-btn-label">Collapse All</span></button>
+      <button class="btn-reset" onclick="resetChecklist()"><i class="bi bi-arrow-counterclockwise me-1"></i>Reset Checklist</button>
+    </div>
+  </div>
+
+  <!-- Checklist Sections -->
+  <div id="cl-container"></div>
+
+</main>
+
+<footer class="portal-footer">
+  DT-Trak Consulting &mdash; Training Check List (IHS) &nbsp;|&nbsp; Revised 4/1/26 &nbsp;|&nbsp; HIPAA Compliant &mdash; No PHI stored
+</footer>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// CHECKLIST DATA  (sourced from Training Check List - New Employee Coding IHS.pdf)
+// ─────────────────────────────────────────────────────────────
+const CL_SECTIONS = [
+  {
+    id: 'pre-start',
+    title: 'Prior to Start Date',
+    icon: '📋',
+    items: [
+      { id:'ps1',  text:'Employee Name documented' },
+      { id:'ps2',  text:'Initials given to coder' },
+      { id:'ps3',  text:'Employee Start Date confirmed' },
+      { id:'ps4',  text:'Trainers assigned (Christy Melstad)' },
+      { id:'ps5',  text:'Assign to QA — varies depending on facility' },
+      { id:'ps6',  text:'Questions — Front end: QA for facility' },
+      { id:'ps7',  text:'Questions — QA: Auditor that QA\'d the visit' },
+      { id:'ps8',  text:'Facility Assignment — NextGen (RSBCIHI)' },
+      { id:'ps9',  text:'Facility Assignment — eClinicalWorks (NVIH)' },
+      { id:'ps10', text:'Facility Assignment — RPMS (SSHWC)' },
+      { id:'ps11', text:'Contact phone numbers reviewed — Miller office: 605-853-2786 | Jen: 605-870-0211 | Renae: 605-481-8884' },
+    ]
+  },
+  {
+    id: 'dt-training',
+    title: 'Initial DT Training',
+    icon: '🖥️',
+    items: [
+      { id:'dt1',  text:'DT Network Information — WorkSpace: workspace.dttrak.com' },
+      { id:'dt2',  text:'Email: Email information reviewed' },
+      { id:'dt3',  text:'Email: Spelling/Grammar check enabled' },
+      { id:'dt4',  text:'Email: Signature created' },
+      { id:'dt5',  text:'Email: Font set — Calibri, 12, automatic black or dark blue' },
+      { id:'dt6',  text:'Email: Read Receipts configured' },
+      { id:'dt7',  text:'Email: Default Send/Receive minutes set' },
+      { id:'dt8',  text:'Email: Subject line usage — use facility abbreviation' },
+      { id:'dt9',  text:'Email: Reply to All usage explained' },
+      { id:'dt10', text:'Email: Email String defined — TO vs. CC vs. BCC' },
+      { id:'dt11', text:'Email: Folders set up — sorting functions within Inbox' },
+      { id:'dt12', text:'Email: Explained what to save vs. what to delete' },
+      { id:'dt13', text:'Email: HIPAA — sending confidential information reviewed' },
+      { id:'dt14', text:'Email: Out of office reply configured' },
+      { id:'dt15', text:'Microsoft Teams: Not HIPAA compliant — use sparingly' },
+      { id:'dt16', text:'Microsoft Teams: Used for meetings from time to time' },
+      { id:'dt17', text:'Microsoft Teams: Coding Team Channel reviewed — General, Coding Compliance Status, Coding Education, Protocol Notes' },
+      { id:'dt18', text:'Chrome: Set as default browser' },
+      { id:'dt19', text:'Chrome: Google account created to sync favorites' },
+      { id:'dt20', text:'Chrome: PDF set to open in Adobe' },
+      { id:'dt21', text:'Chrome: LastPass extension installed' },
+    ]
+  },
+  {
+    id: 'timeclock',
+    title: 'Time Clock & Payroll',
+    icon: '⏰',
+    items: [
+      { id:'tc1',  text:'TimeClock Plus URL reviewed: 170813.tcplusondemand.com' },
+      { id:'tc2',  text:'TimeClock 7 Instruction Sheet reviewed' },
+      { id:'tc3',  text:'Switching Cost Codes — TimeClock Service Categories spreadsheet reviewed' },
+      { id:'tc4',  text:'Lunch — ½ hour mandatory for every 6 hours worked' },
+      { id:'tc5',  text:'Note — purpose and when to use explained' },
+      { id:'tc6',  text:'Note — add note prior to leaving each day' },
+      { id:'tc7',  text:'Cost Code MISC — must have a note when used' },
+      { id:'tc8',  text:'Time Off Requests — difference between leave codes explained' },
+      { id:'tc9',  text:'Clocking out for non-work tasks (bathroom, food, any non-work activity) explained' },
+      { id:'tc10', text:'Payroll: How to access pay stub — email Samantha Sheridan and CC Renae Aalbers' },
+      { id:'tc11', text:'Payroll: Pay stub password — first 4 letters of last name + last 4 digits of SSN' },
+      { id:'tc12', text:'Payroll: Work week is Sunday–Saturday' },
+      { id:'tc13', text:'Payroll: Pay periods — 1st–15th paid on the 20th; 16th–end of month paid on the 5th' },
+      { id:'tc14', text:'Payroll: If 5th or 20th falls on weekend/holiday, payday is next business day' },
+      { id:'tc15', text:'AAPC: Webinar subscriptions and corporate membership reviewed' },
+      { id:'tc16', text:'Set up programs/passwords: Royal TS folder on SharePoint, DT-Coder, DT-Tester, LastPass, Adobe PDF Signature' },
+    ]
+  },
+  {
+    id: 'access',
+    title: 'Access & Verify',
+    icon: '🔒',
+    items: [
+      { id:'ac1',  text:'LastPass — www.lastpass.com account set up' },
+      { id:'ac2',  text:'LastPass folder on SharePoint reviewed' },
+      { id:'ac3',  text:'Calendar reminder set for twice-monthly Access/Verify check (maximum 30 minutes)' },
+      { id:'ac4',  text:'A/V Error Form reviewed — process in the Master DT Guidelines' },
+      { id:'ac5',  text:'How to check new A/V — checklist and required menus/keys reviewed' },
+      { id:'ac6',  text:'Request for facility folder access on SharePoint submitted' },
+      { id:'ac7',  text:'DT Help Desk URL reviewed: dt-trak.itclientportal.com — see Master DT Guidelines for specifics' },
+      { id:'ac8',  text:'Royal TS: Domain username D1\\ explained (note: not all facilities use D1 domain)' },
+      { id:'ac9',  text:'Royal TS: How to find EHR icon if not loaded on desktop' },
+      { id:'ac10', text:'Royal TS: How to log off remote desktop — log off instead of closing with X' },
+      { id:'ac11', text:'Royal TS: RPMS access reviewed' },
+    ]
+  },
+  {
+    id: 'sharepoint',
+    title: 'SharePoint Navigation',
+    icon: '📁',
+    items: [
+      { id:'sp1',  text:'Use Chrome or Internet Explorer for SharePoint' },
+      { id:'sp2',  text:'SharePoint home URL reviewed: dttraksecure.sharepoint.com/sites/home' },
+      { id:'sp3',  text:'SharePoint How-tos folder reviewed' },
+      { id:'sp4',  text:'Checking in/out files — verify all checked-out items returned by end of day' },
+      { id:'sp5',  text:'Education Page — General Education: TimeClock folder reviewed' },
+      { id:'sp6',  text:'Education Page — Coding Education: HEDIS Measures, Telehealth (review only if working on NextGen or eCW)' },
+      { id:'sp7',  text:'Coding Folder — NextGen How to Instructions; Coding in eClinicalWorks' },
+      { id:'sp8',  text:'Coding Folder — New Coder Information: Data Entry Flow Chart, Military Time Table, Mnemonics List, RPMS mnemonics, Coding Scratch Paper' },
+      { id:'sp9',  text:'Coding Page — Master DT Guidelines, Clinic Code List, Provider Affiliation Codes, Doc guide for HF and EX Codes' },
+      { id:'sp10', text:'Facility Coding Page — Active DT Facility Page Links' },
+      { id:'sp11', text:'Team Page — Employee folder reviewed' },
+      { id:'sp12', text:'Protocol Notes — search function using date format x/x/xx; Add, Revised, Deleted, Strike through comments explained' },
+    ]
+  },
+  {
+    id: 'coding',
+    title: "Let's Start Coding",
+    icon: '💻',
+    items: [
+      { id:'cd1',  text:'DT-Coder URL and login reviewed: dt-traker.trackvia.com' },
+      { id:'cd2',  text:'DT-Coder Instructions — Questions from Billing reviewed' },
+      { id:'cd3',  text:'DT-Coder Instructions — Audits from QA and audit process reviewed' },
+      { id:'cd4',  text:'DT-Coder Instructions — Notifications: process and Notification Master reviewed' },
+      { id:'cd5',  text:'DT-Coder Instructions — Missed Merges, INCV, Stats reviewed' },
+      { id:'cd6',  text:'DT-Coder Instructions — Questions/Changes, Coding Questions reviewed' },
+      { id:'cd7',  text:'Target Goals reviewed — DT-Coder to be open every day' },
+      { id:'cd8',  text:'Documents to have open daily: Facility protocol notes, Master DT Guidelines, DT-Coder Instructions for Coders, Telehealth Protocol' },
+      { id:'cd9',  text:'SharePoint locations to have open: HEDIS measures folder' },
+      { id:'cd10', text:'Notes to Review: Master DT Guidelines, DT-Coder instructions, Facility Notes, HEDIS Documents, DT Telehealth Protocol' },
+    ]
+  },
+  {
+    id: 'signatures',
+    title: 'Signatures & Evaluation',
+    icon: '✍️',
+    items: [
+      { id:'sg1',  text:'Employee signature obtained' },
+      { id:'sg2',  text:'Trainer A signature obtained (signature confirms all checked areas were covered)' },
+      { id:'sg3',  text:'Trainer B signature obtained, if applicable' },
+      { id:'sg4',  text:'Training Evaluation — Q1: The training met my expectations' },
+      { id:'sg5',  text:'Training Evaluation — Q2: I will be able to apply the knowledge learned' },
+      { id:'sg6',  text:'Training Evaluation — Q3: Training objectives for each topic were identified and followed' },
+      { id:'sg7',  text:'Training Evaluation — Q4: Content was organized and easy to follow' },
+      { id:'sg8',  text:'Training Evaluation — Q5: Materials provided were pertinent and useful' },
+      { id:'sg9',  text:'Training Evaluation — Q6: The trainer was knowledgeable' },
+      { id:'sg10', text:'Training Evaluation — Q7: The quality of instruction was good' },
+      { id:'sg11', text:'Training Evaluation — Q8: The trainer met the training objectives' },
+      { id:'sg12', text:'Training Evaluation — Q9: Adequate time was provided for questions and discussion' },
+      { id:'sg13', text:'Training Evaluation — Q10: Overall training rating provided' },
+      { id:'sg14', text:'Completed checklist and evaluation form returned to Administrator of Health Information Operations' },
+    ]
+  },
+];
+
+// ─────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────
+const LS_KEY  = 'dt_checklist_portal_v1';
+const EMP_KEY = 'dt_portal_user_v1';
+
+// TODO: Replace with Azure AD user lookup when wiring live
+// const EMPLOYEE_NAME = '{{user.fullname}}'; // Liquid tag for Power Pages
+const EMPLOYEE_NAME = localStorage.getItem(EMP_KEY) || 'New Employee';
+
+let checkData = {};
+let allCollapsed = false;
+const collapsed = new Set();
+
+function loadData() {
+  try { checkData = JSON.parse(localStorage.getItem(LS_KEY + '_' + EMPLOYEE_NAME) || '{}'); }
+  catch(e) { checkData = {}; }
+}
+function saveData() {
+  localStorage.setItem(LS_KEY + '_' + EMPLOYEE_NAME, JSON.stringify(checkData));
+}
+
+// ─────────────────────────────────────────────────────────────
+// COUNTS
+// ─────────────────────────────────────────────────────────────
+function totalItems() { return CL_SECTIONS.reduce((a,s)=>a+s.items.length,0); }
+function doneItems()  { return Object.values(checkData).filter(Boolean).length; }
+function secDone(sec) { return sec.items.filter(it=>checkData[it.id]).length; }
+
+// ─────────────────────────────────────────────────────────────
+// RENDER STATUS WIDGET
+// ─────────────────────────────────────────────────────────────
+function renderWidget() {
+  const total = totalItems();
+  const done  = doneItems();
+  const pct   = total ? Math.round((done/total)*100) : 0;
+  const secsDoneCount = CL_SECTIONS.filter(s=>secDone(s)===s.items.length).length;
+
+  document.getElementById('sw-done').textContent  = done;
+  document.getElementById('sw-total').textContent = total;
+  document.getElementById('sw-secs').textContent  = secsDoneCount + '/' + CL_SECTIONS.length;
+  document.getElementById('sw-bar-fill').style.width = pct + '%';
+  document.getElementById('sw-bar-label').textContent = pct + '% complete';
+
+  document.getElementById('sw-sections').innerHTML = CL_SECTIONS.map(sec => {
+    const d = secDone(sec), t = sec.items.length;
+    const isDone = d === t;
+    const isPartial = d > 0 && d < t;
+    return `<div class="sw-sec-dot${isDone?' done':isPartial?' partial':''}">
+      <div class="dot"></div>${sec.title} <span style="opacity:.7;font-size:.68rem;">${d}/${t}</span>
+    </div>`;
+  }).join('');
+
+  // Completion banner
+  const banner = document.getElementById('complete-banner');
+  if (done === total && total > 0) banner.classList.add('show');
+  else banner.classList.remove('show');
+}
+
+// ─────────────────────────────────────────────────────────────
+// RENDER SECTIONS
+// ─────────────────────────────────────────────────────────────
+function renderSections() {
+  document.getElementById('cl-container').innerHTML = CL_SECTIONS.map(sec => {
+    const done = secDone(sec), total = sec.items.length;
+    const isCollapsed = collapsed.has(sec.id);
+    const isDone    = done === total;
+    const isPartial = done > 0 && !isDone;
+    const pct = total ? Math.round((done/total)*100) : 0;
+    return `
+      <div class="cl-section" id="sec-${sec.id}">
+        <div class="cl-sec-header" onclick="toggleSection('${sec.id}')">
+          <div class="cl-sec-left">
+            <span class="cl-sec-icon">${sec.icon}</span>
+            <div>
+              <div class="cl-sec-name">${esc(sec.title)}</div>
+              <div class="cl-sec-mini-bar">
+                <div class="cl-sec-mini-fill" id="mini-fill-${sec.id}" style="width:${pct}%"></div>
+              </div>
+            </div>
+          </div>
+          <div class="cl-sec-right">
+            <span class="cl-sec-badge${isDone?' all-done':isPartial?' partial':''}" id="badge-${sec.id}">${done}/${total}</span>
+            <i class="bi bi-chevron-right cl-chevron${isCollapsed?'':' open'}" id="chev-${sec.id}"></i>
+          </div>
+        </div>
+        <div class="cl-items" id="items-${sec.id}" style="display:${isCollapsed?'none':'block'}">
+          ${sec.items.map(it=>`
+            <div class="cl-item${checkData[it.id]?' checked':''}" id="item-${it.id}" onclick="toggle('${it.id}','${sec.id}')">
+              <div class="cl-cb">${checkData[it.id]?'<i class="bi bi-check2"></i>':''}</div>
+              <span class="cl-item-text">${esc(it.text)}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────────────────────
+// ACTIONS
+// ─────────────────────────────────────────────────────────────
+window.toggle = function(itemId, secId) {
+  checkData[itemId] = !checkData[itemId];
+  saveData();
+  // Update item DOM
+  const el = document.getElementById('item-'+itemId);
+  if (el) {
+    el.classList.toggle('checked', !!checkData[itemId]);
+    const cb = el.querySelector('.cl-cb');
+    if (cb) cb.innerHTML = checkData[itemId] ? '<i class="bi bi-check2"></i>' : '';
+  }
+  // Update section badge + mini bar
+  const sec = CL_SECTIONS.find(s=>s.id===secId);
+  if (sec) {
+    const done = secDone(sec), total = sec.items.length;
+    const isDone = done===total, isPartial = done>0&&!isDone;
+    const badge = document.getElementById('badge-'+secId);
+    if (badge) {
+      badge.textContent = done+'/'+total;
+      badge.className = 'cl-sec-badge'+(isDone?' all-done':isPartial?' partial':'');
+    }
+    const mini = document.getElementById('mini-fill-'+secId);
+    if (mini) mini.style.width = (total?Math.round((done/total)*100):0)+'%';
+  }
+  renderWidget();
+};
+
+window.toggleSection = function(secId) {
+  if (collapsed.has(secId)) collapsed.delete(secId); else collapsed.add(secId);
+  const items = document.getElementById('items-'+secId);
+  const chev  = document.getElementById('chev-'+secId);
+  if (items) items.style.display = collapsed.has(secId) ? 'none' : 'block';
+  if (chev)  chev.className = 'bi bi-chevron-right cl-chevron' + (collapsed.has(secId)?'':' open');
+};
+
+window.toggleAll = function() {
+  allCollapsed = !allCollapsed;
+  CL_SECTIONS.forEach(sec => {
+    if (allCollapsed) collapsed.add(sec.id); else collapsed.delete(sec.id);
+    const items = document.getElementById('items-'+sec.id);
+    const chev  = document.getElementById('chev-'+sec.id);
+    if (items) items.style.display = allCollapsed ? 'none' : 'block';
+    if (chev)  chev.className = 'bi bi-chevron-right cl-chevron' + (allCollapsed?'':' open');
+  });
+  document.getElementById('expand-btn-label').textContent = allCollapsed ? 'Expand All' : 'Collapse All';
+};
+
+window.resetChecklist = function() {
+  if (!confirm('Reset all checklist progress for ' + EMPLOYEE_NAME + '? This cannot be undone.')) return;
+  checkData = {};
+  saveData();
+  renderSections();
+  renderWidget();
+};
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────
+loadData();
+renderSections();
+renderWidget();
+
+// Set nav/display name
+const initials = EMPLOYEE_NAME.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase() || '?';
+document.getElementById('nav-avatar').textContent       = initials;
+document.getElementById('nav-name').textContent         = EMPLOYEE_NAME;
+document.getElementById('emp-name-display').textContent = EMPLOYEE_NAME;
+</script>
+
+</body>
+</html>

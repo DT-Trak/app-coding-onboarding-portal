@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DT-Trak Project Dashboard — Live Team View</title>
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  DT-TRAK LIVE PROJECT DASHBOARD                              ║
+  ║  Requires: Azure AD App Registration + SharePoint List       ║
+  ║  See IT Setup Ticket for configuration steps.                ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" crossorigin="anonymous"></script>
+<style>
+  :root {
+    color-scheme: light;
+    --navy:    #1F3864;
+    --blue:    #2E75B6;
+    --blue-lt: #D6E4F0;
+    --orange:  #C55A11;
+    --purple:  #6f42c1;
+    --border:  #e2e8f0;
+    --text:    #1a1a2e;
+    --textlt:  #64748b;
+    --light:   #f8f9fa;
+    --green:   #22c55e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: var(--text); font-size: 14px; line-height: 1.5; }
+
+  /* ── SIGN-IN SCREEN ── */
+  #signin-wrap {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #1F3864 0%, #2E75B6 100%);
+  }
+  .signin-card {
+    background: #fff; border-radius: 16px; padding: 48px 40px;
+    text-align: center; max-width: 400px; width: 90%;
+    box-shadow: 0 24px 64px rgba(0,0,0,.25);
+  }
+  .signin-logo {
+    width: 64px; height: 64px; border-radius: 14px; background: var(--navy);
+    color: #fff; font-weight: 900; font-size: 1.5rem; display: flex;
+    align-items: center; justify-content: center; margin: 0 auto 20px;
+  }
+  .signin-card h2 { font-size: 1.3rem; color: var(--navy); margin-bottom: 8px; }
+  .signin-card p  { font-size: .88rem; color: var(--textlt); margin-bottom: 28px; line-height: 1.6; }
+  .ms-btn {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; padding: 12px 24px; border: 2px solid #8c8c8c; border-radius: 8px;
+    background: #fff; color: #5e5e5e; font-size: .9rem; font-weight: 600;
+    cursor: pointer; font-family: inherit; transition: all .15s;
+  }
+  .ms-btn:hover { background: #f5f5f5; border-color: var(--blue); color: var(--blue); }
+  .ms-logo { width: 20px; height: 20px; flex-shrink: 0; }
+  .auth-error { margin-top: 14px; font-size: .8rem; color: #dc2626; min-height: 20px; }
+  .signin-note { margin-top: 20px; font-size: .75rem; color: #94a3b8; line-height: 1.5; }
+
+  /* ── HEADER ── */
+  .hdr {
+    background: var(--navy); color: #fff; padding: 11px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,.25);
+  }
+  .hdr-brand { font-weight: 700; font-size: 1rem; }
+  .hdr-sub   { font-size: .73rem; opacity: .7; margin-top: 1px; }
+  .hdr-right { display: flex; align-items: center; gap: 10px; }
+  .phase-badge { background: var(--blue); color: #fff; padding: 5px 13px; border-radius: 20px; font-size: .74rem; font-weight: 600; }
+  .sync-pill {
+    font-size: .72rem; padding: 4px 10px; border-radius: 14px; font-weight: 500;
+    background: rgba(255,255,255,.15); color: #fff; transition: all .3s;
+  }
+  .sync-pill.saving  { background: rgba(197,90,17,.5); }
+  .sync-pill.saved   { background: rgba(34,197,94,.35); }
+  .sync-pill.error   { background: rgba(220,38,38,.5); }
+  .user-chip {
+    display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,.12);
+    border-radius: 20px; padding: 4px 12px 4px 6px; cursor: pointer;
+    font-size: .75rem; transition: background .15s;
+  }
+  .user-chip:hover { background: rgba(255,255,255,.22); }
+  .user-avatar {
+    width: 24px; height: 24px; border-radius: 50%; background: var(--blue);
+    display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 700;
+  }
+  .signout-btn {
+    background: rgba(255,255,255,.1); border: 1.5px solid rgba(255,255,255,.3);
+    color: #fff; padding: 4px 11px; border-radius: 14px; font-size: .72rem;
+    cursor: pointer; font-family: inherit; transition: all .15s;
+  }
+  .signout-btn:hover { background: rgba(255,255,255,.2); }
+
+  /* ── LAYOUT ── */
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 18px 18px 48px; }
+  .stats { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; margin-bottom: 14px; }
+  .stat { background: #fff; border-radius: 10px; padding: 13px 14px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,.07); border-top: 4px solid transparent; }
+  .stat-n { font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
+  .stat-l { font-size: .67rem; color: var(--textlt); text-transform: uppercase; letter-spacing: .6px; margin-top: 3px; }
+  .two-col { display: grid; grid-template-columns: 1fr 220px; gap: 12px; margin-bottom: 14px; }
+  .card { background: #fff; border-radius: 10px; padding: 16px 18px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+  .card-ttl { font-weight: 700; color: var(--navy); font-size: .78rem; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 14px; }
+  .phase-row { display: flex; align-items: center; justify-content: space-between; }
+  .phase-step { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: 1; }
+  .phase-dot { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 700; flex-shrink: 0; }
+  .dot-done   { background: var(--green); color: #fff; }
+  .dot-active { background: var(--blue); color: #fff; }
+  .dot-future { background: #e2e8f0; color: #94a3b8; }
+  .phase-lbl { font-size: .7rem; font-weight: 600; text-align: center; }
+  .phase-sub { font-size: .65rem; color: var(--textlt); text-align: center; }
+  .connector { flex: 1; height: 2px; background: #e2e8f0; margin-bottom: 30px; }
+  .connector.done { background: var(--green); }
+  .prog-wrap { margin-top: 14px; }
+  .prog-outer { height: 8px; background: #e2e8f0; border-radius: 4px; overflow: hidden; margin-bottom: 5px; }
+  .prog-fill  { height: 100%; background: linear-gradient(90deg,var(--blue),#4a9fd4); border-radius: 4px; transition: width .5s; }
+  .prog-txt   { font-size: .73rem; color: var(--textlt); text-align: right; }
+  .chart-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; }
+  .chart-legend { font-size: .72rem; color: var(--textlt); text-align: center; line-height: 1.8; }
+
+  /* ── LAST-UPDATED BANNER ── */
+  .update-banner {
+    background: #fff; border-radius: 8px; padding: 8px 14px; margin-bottom: 14px;
+    font-size: .78rem; color: var(--textlt); display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06); border-left: 4px solid var(--blue);
+  }
+  .update-banner strong { color: var(--navy); }
+
+  /* ── TABS ── */
+  .tabs { display: flex; border-bottom: 2px solid var(--border); background: #fff; border-radius: 10px 10px 0 0; padding: 0 4px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.07); }
+  .tab { padding: 12px 18px; border: none; background: transparent; color: var(--textlt); font-weight: 500; font-size: .83rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .15s; font-family: inherit; }
+  .tab:hover { color: var(--blue); }
+  .tab.on { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
+
+  /* ── FILTER PILLS ── */
+  .filters { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; align-items: center; }
+  .fl { font-size: .73rem; color: var(--textlt); font-weight: 500; }
+  .pill { padding: 4px 11px; border-radius: 16px; font-size: .73rem; font-weight: 500; cursor: pointer; border: 1.5px solid var(--border); background: #fff; color: var(--textlt); transition: all .12s; font-family: inherit; }
+  .pill.on { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .pdiv { width: 1px; height: 18px; background: var(--border); margin: 0 3px; }
+  .filter-hint { margin-left: auto; font-size: .7rem; color: var(--textlt); }
+
+  /* ── SECTION HEADERS ── */
+  .sec-hdr { display: flex; align-items: center; justify-content: space-between; padding: 8px 4px 5px; margin: 16px 0 7px; border-bottom: 1.5px solid var(--border); }
+  .sec-hdr:first-child { margin-top: 0; }
+  .sec-name { font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; }
+  .sec-cnt  { font-size: .68rem; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+
+  /* ── TASK ITEMS ── */
+  .task-wrap { margin-bottom: 6px; }
+  .task {
+    display: flex; align-items: center; gap: 10px; padding: 9px 13px; background: #fff;
+    border-radius: 8px 8px 0 0; border-left: 4px solid var(--border);
+    box-shadow: 0 1px 3px rgba(0,0,0,.05); transition: all .15s; user-select: none;
+  }
+  .task-wrap.closed .task { border-radius: 8px; }
+  .task:hover { box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+  .task.completed   { border-left-color: var(--green); }
+  .task.in_progress { border-left-color: var(--orange); }
+  .task.pending     { border-left-color: #e2e8f0; }
+  .task.nth         { border-left-color: var(--purple); }
+  .tcheck { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 10px; cursor: pointer; }
+  .completed   .tcheck { background: var(--green);  border-color: var(--green);  color: #fff; }
+  .in_progress .tcheck { background: var(--orange); border-color: var(--orange); color: #fff; }
+  .tid { font-size: .67rem; color: #fff; background: var(--blue); padding: 2px 6px; border-radius: 8px; font-weight: 700; flex-shrink: 0; min-width: 28px; text-align: center; cursor: pointer; }
+  .completed   .tid { background: var(--green); }
+  .in_progress .tid { background: var(--orange); }
+  .nth         .tid { background: var(--purple); }
+  .tname { flex: 1; font-size: .86rem; font-weight: 500; cursor: pointer; }
+  .completed .tname { text-decoration: line-through; color: var(--textlt); }
+  .tbadge { font-size: .67rem; padding: 2px 8px; border-radius: 8px; font-weight: 600; flex-shrink: 0; cursor: pointer; }
+  .b-done { background: #dcfce7; color: #15803d; }
+  .b-prog { background: #fff7ed; color: #c2410c; }
+  .b-pend { background: #f1f5f9; color: #64748b; }
+
+  /* ── NOTE BUTTON ── */
+  .note-btn { background: none; border: 1.5px solid var(--border); border-radius: 6px; padding: 2px 7px; cursor: pointer; font-size: .78rem; color: var(--textlt); font-family: inherit; transition: all .12s; flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
+  .note-btn:hover { background: var(--blue-lt); border-color: var(--blue); color: var(--blue); }
+  .note-btn.has-notes { border-color: var(--blue); color: var(--blue); background: var(--blue-lt); }
+  .note-btn.open { background: var(--navy); border-color: var(--navy); color: #fff; }
+  .note-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
+
+  /* ── NOTES PANEL ── */
+  .notes-panel { background: #fafbff; border: 1.5px solid var(--blue-lt); border-top: none; border-left: 4px solid var(--blue); border-radius: 0 0 8px 8px; padding: 14px 16px; display: none; box-shadow: 0 2px 6px rgba(46,117,182,.08); }
+  .notes-panel.open { display: block; }
+  .np-ttl { font-size: .72rem; font-weight: 700; color: var(--blue); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+  .notes-ta { width: 100%; min-height: 72px; border: 1.5px solid var(--border); border-radius: 7px; padding: 9px 11px; font-size: .84rem; font-family: inherit; color: var(--text); resize: vertical; line-height: 1.5; background: #fff; outline: none; }
+  .notes-ta:focus { border-color: var(--blue); }
+  .notes-ta::placeholder { color: #b0bec5; }
+  .save-ind { font-size: .68rem; color: var(--green); margin-left: 6px; opacity: 0; transition: opacity .3s; }
+  .save-ind.show { opacity: 1; }
+  .links-section { margin-top: 10px; }
+  .links-lbl { font-size: .72rem; font-weight: 600; color: var(--textlt); margin-bottom: 6px; }
+  .link-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .link-chip { display: flex; align-items: center; gap: 5px; background: var(--blue-lt); border: 1.5px solid var(--blue); border-radius: 20px; padding: 3px 10px; font-size: .77rem; color: var(--blue); font-weight: 500; max-width: 280px; }
+  .link-chip a { color: var(--blue); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; }
+  .link-chip a:hover { text-decoration: underline; }
+  .link-rm { background: none; border: none; cursor: pointer; color: var(--blue); font-size: .8rem; padding: 0; opacity: .6; flex-shrink: 0; }
+  .link-rm:hover { opacity: 1; }
+  .add-link-form { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .add-link-form input { border: 1.5px solid var(--border); border-radius: 6px; padding: 5px 9px; font-size: .81rem; font-family: inherit; outline: none; background: #fff; color: var(--text); }
+  .add-link-form input:focus { border-color: var(--blue); }
+  .inp-label { width: 130px; }
+  .inp-url   { flex: 1; min-width: 160px; }
+  .add-btn { background: var(--blue); color: #fff; border: none; border-radius: 6px; padding: 5px 13px; font-size: .8rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .add-btn:hover { background: var(--navy); }
+  .np-footer { display: flex; justify-content: flex-end; margin-top: 10px; }
+  .clear-btn { background: none; border: 1.5px solid #fca5a5; color: #dc2626; border-radius: 6px; padding: 4px 12px; font-size: .76rem; cursor: pointer; font-family: inherit; }
+
+  /* ── DOC CARDS ── */
+  .doc-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(255px,1fr)); gap: 11px; margin-bottom: 18px; }
+  .doc-card { display: flex; align-items: center; gap: 12px; padding: 13px; background: #fff; border-radius: 10px; border: 1.5px solid var(--border); text-decoration: none; color: inherit; transition: all .15s; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .doc-card:hover { border-color: var(--blue); box-shadow: 0 4px 12px rgba(46,117,182,.15); transform: translateY(-2px); }
+  .dicon { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.2rem; }
+  .dname { font-weight: 600; font-size: .86rem; }
+  .ddesc { font-size: .73rem; color: var(--textlt); margin-top: 2px; }
+  .dtype { font-size: .63rem; padding: 1px 6px; border-radius: 5px; font-weight: 600; margin-top: 4px; display: inline-block; }
+  .sec-ttl { font-size: .78rem; font-weight: 700; color: var(--navy); text-transform: uppercase; letter-spacing: .5px; padding: 14px 0 9px; border-bottom: 2px solid var(--blue-lt); margin-bottom: 11px; }
+  .sec-ttl:first-child { padding-top: 0; }
+
+  /* ── LOADING OVERLAY ── */
+  #loading { position: fixed; inset: 0; background: rgba(31,56,100,.92); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; color: #fff; gap: 16px; }
+  .spinner { width: 40px; height: 40px; border: 4px solid rgba(255,255,255,.2); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading p { font-size: .9rem; opacity: .8; }
+
+  .tab-pane { display: none; }
+  .tab-pane.on { display: block; }
+
+  @media(max-width:700px) {
+    .stats { grid-template-columns: repeat(3,1fr); }
+    .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loading">
+  <div class="spinner"></div>
+  <p id="loading-msg">Connecting to Microsoft...</p>
+</div>
+
+<!-- SIGN-IN SCREEN -->
+<div id="signin-wrap" style="display:none;">
+  <div class="signin-card">
+    <div class="signin-logo">DT</div>
+    <h2>DT-Trak Project Dashboard</h2>
+    <p>Sign in with your DT-Trak Microsoft account to view and update the live team dashboard.</p>
+    <button class="ms-btn" onclick="signIn()">
+      <svg class="ms-logo" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+        <rect x="11" y="1" width="9" height="9" fill="#00a4ef"/>
+        <rect x="1" y="11" width="9" height="9" fill="#7fba00"/>
+        <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+      </svg>
+      Sign in with Microsoft
+    </button>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="signin-note">Your Microsoft 365 credentials are used. No separate account needed.</div>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until authenticated) -->
+<div id="app" style="display:none;">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div>
+      <div class="hdr-brand">&#9646;&#9646; DT-Trak Consulting</div>
+      <div class="hdr-sub">Medical Coder Onboarding Portal &mdash; Live Team Dashboard</div>
+    </div>
+    <div class="hdr-right">
+      <div class="phase-badge">&#128736; Phase 2: Building</div>
+      <div class="sync-pill" id="sync-pill">&#128274; Connected</div>
+      <div class="user-chip" title="Signed in user">
+        <div class="user-avatar" id="user-initials">?</div>
+        <span id="user-name">Loading...</span>
+      </div>
+      <button class="signout-btn" onclick="signOut()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <!-- LAST UPDATED BANNER -->
+    <div class="update-banner" id="update-banner" style="display:none;">
+      &#128257; Last updated by <strong id="meta-user">—</strong> &nbsp;&middot;&nbsp; <span id="meta-time">—</span>
+      <span style="margin-left:auto;font-size:.72rem;cursor:pointer;color:var(--blue);" onclick="forceRefresh()">&#8635; Refresh now</span>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats" id="stats"></div>
+
+    <!-- PHASE + CHART -->
+    <div class="two-col">
+      <div class="card">
+        <div class="card-ttl">&#128640; Project Timeline</div>
+        <div class="phase-row">
+          <div class="phase-step">
+            <div class="phase-dot dot-done">&#10003;</div>
+            <div class="phase-lbl" style="color:#22c55e;">Phase 1</div>
+            <div class="phase-sub">Analysis &amp; Video</div>
+          </div>
+          <div class="connector done"></div>
+          <div class="phase-step">
+            <div class="phase-dot dot-active">&#128736;</div>
+            <div class="phase-lbl" style="color:var(--blue);">Phase 2</div>
+            <div class="phase-sub">Portal Build</div>
+          </div>
+          <div class="connector"></div>
+          <div class="phase-step">
+            <div class="phase-dot dot-future">&#128296;</div>
+            <div class="phase-lbl" style="color:var(--textlt);">Phase 3</div>
+            <div class="phase-sub">Testing</div>
+          </div>
+          <div class="connector"></div>
+          <div class="phase-step">
+            <div class="phase-dot dot-future">&#127881;</div>
+            <div class="phase-lbl" style="color:var(--textlt);">Live</div>
+            <div class="phase-sub">Portal Active</div>
+          </div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-outer"><div class="prog-fill" id="pbar"></div></div>
+          <div class="prog-txt" id="ptxt"></div>
+        </div>
+      </div>
+      <div class="card chart-wrap">
+        <canvas id="donut" width="160" height="160"></canvas>
+        <div class="chart-legend" id="cleg"></div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab on" data-t="tasks">&#9989; Tasks</button>
+      <button class="tab" data-t="docs">&#128193; Documents</button>
+      <button class="tab" data-t="res">&#128279; Resources</button>
+    </div>
+
+    <!-- ── TASKS TAB ── -->
+    <div class="tab-pane on" id="pane-tasks">
+      <div class="filters">
+        <span class="fl">Type:</span>
+        <button class="pill on" data-f="all">All</button>
+        <button class="pill" data-f="critical">Critical</button>
+        <button class="pill" data-f="nice-to-have">Nice-to-Have</button>
+        <div class="pdiv"></div>
+        <span class="fl">Status:</span>
+        <button class="pill on" data-s="all">All</button>
+        <button class="pill" data-s="pending">Pending</button>
+        <button class="pill" data-s="in_progress">In Progress</button>
+        <button class="pill" data-s="completed">Done</button>
+        <span class="filter-hint">Click status/# to cycle &bull; &#9997; to open notes</span>
+      </div>
+      <div id="tasklist"></div>
+    </div>
+
+    <!-- ── DOCUMENTS TAB ── -->
+    <div class="tab-pane" id="pane-docs">
+      <div class="sec-ttl">&#127760; Portal Pages (open from your Portal Build folder)</div>
+      <div class="doc-grid">
+        <div class="doc-card"><div class="dicon" style="background:#D6E4F0;">&#127968;</div><div><div class="dname">01 &mdash; Employee Dashboard</div><div class="ddesc">Progress overview, quick links, AI chat</div><span class="dtype" style="background:#D6E4F0;color:var(--blue);">HTML</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#D6E4F0;">&#127909;</div><div><div class="dname">02 &mdash; Training Modules</div><div class="ddesc">All 25 modules with status &amp; filters</div><span class="dtype" style="background:#D6E4F0;color:var(--blue);">HTML</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#D6E4F0;">&#9654;&#65038;</div><div><div class="dname">03 &mdash; Module Player</div><div class="ddesc">Video player, chapters, quiz, SOP card</div><span class="dtype" style="background:#D6E4F0;color:var(--blue);">HTML</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#D6E4F0;">&#128278;</div><div><div class="dname">04 &mdash; Resources</div><div class="ddesc">Tools, EHR systems, SOPs, help links</div><span class="dtype" style="background:#D6E4F0;color:var(--blue);">HTML</span></div></div>
+      </div>
+      <div class="sec-ttl">&#128196; Reference Documents</div>
+      <div class="doc-grid">
+        <div class="doc-card"><div class="dicon" style="background:#e8f5e9;">&#128202;</div><div><div class="dname">Descript Editing Checklist</div><div class="ddesc">All 25 modules &middot; cut timestamps &middot; Stream URLs</div><span class="dtype" style="background:#e8f5e9;color:#15803d;">XLSX</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#dbeafe;">&#128196;</div><div><div class="dname">Descript Editing Checklist</div><div class="ddesc">Organized by source MP4 file with tip boxes</div><span class="dtype" style="background:#dbeafe;color:#1d4ed8;">DOCX</span></div></div>
+      </div>
+    </div>
+
+    <!-- ── RESOURCES TAB ── -->
+    <div class="tab-pane" id="pane-res">
+      <div class="sec-ttl">&#128188; Daily Work Systems</div>
+      <div class="doc-grid">
+        <div class="doc-card"><div class="dicon" style="background:#D6E4F0;">&#127973;</div><div><div class="dname">DT-Coder</div><div class="ddesc">Primary coding platform</div><span class="dtype" style="background:#D6E4F0;color:var(--blue);">Daily</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#fff3cd;">&#9200;</div><div><div class="dname">TimeClock Plus</div><div class="ddesc">Timekeeping &amp; attendance</div><span class="dtype" style="background:#fff3cd;color:#92400e;">Daily</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#f3e8ff;">&#128187;</div><div><div class="dname">Royal TS</div><div class="ddesc">Remote desktop to facility EHRs</div><span class="dtype" style="background:#f3e8ff;color:#7c3aed;">Required</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#fce8e8;">&#128274;</div><div><div class="dname">LastPass</div><div class="ddesc">Password manager</div><span class="dtype" style="background:#fce8e8;color:#b91c1c;">Required</span></div></div>
+      </div>
+      <div class="sec-ttl">&#127973; EHR Systems</div>
+      <div class="doc-grid">
+        <div class="doc-card"><div class="dicon" style="background:#dcfce7;">&#10133;</div><div><div class="dname">NextGen</div><div class="ddesc">RSBCIHI</div><span class="dtype" style="background:#dcfce7;color:#15803d;">EHR</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#dcfce7;">&#10133;</div><div><div class="dname">eClinicalWorks</div><div class="ddesc">NVIH</div><span class="dtype" style="background:#dcfce7;color:#15803d;">EHR</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#dcfce7;">&#10133;</div><div><div class="dname">RPMS</div><div class="ddesc">SSHWC</div><span class="dtype" style="background:#dcfce7;color:#15803d;">EHR</span></div></div>
+      </div>
+      <div class="sec-ttl">&#128218; Coding References</div>
+      <div class="doc-grid">
+        <div class="doc-card"><div class="dicon" style="background:#dbeafe;">&#128218;</div><div><div class="dname">3M Encoder</div><div class="ddesc">ICD-10 / CPT lookup</div><span class="dtype" style="background:#dbeafe;color:#1d4ed8;">External</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#dbeafe;">&#127891;</div><div><div class="dname">AAPC</div><div class="ddesc">Coding education &amp; CEUs</div><span class="dtype" style="background:#dbeafe;color:#1d4ed8;">External</span></div></div>
+        <div class="doc-card"><div class="dicon" style="background:#D6E4F0;">&#128203;</div><div><div class="dname">SOP Library (SharePoint)</div><div class="ddesc">SOPs 01&ndash;25</div><span class="dtype" style="background:#D6E4F0;color:var(--blue);">Reference</span></div></div>
+      </div>
+    </div>
+
+  </div><!-- /wrap -->
+</div><!-- /app -->
+
+<script>
+// ============================================================
+//  ⚙️  CONFIG — IT ADMINISTRATOR: FILL IN THESE 2 VALUES
+// ============================================================
+const CONFIG = {
+  clientId: '329a999c-01bf-48a6-a73a-53c8d70e5ac6',
+  tenantId: '626ecc26-28d7-44e8-ac0b-7f2b950f9e07',
+  siteUrl:  'https://dttraksecure.sharepoint.com/sites/InformationTechnology',
+  listName: 'ProjectDashboard',  // ← SharePoint list name (create per IT ticket)
+};
+// ============================================================
+
+// ── TASK DATA ──────────────────────────────────────────────
+const TASKS = [
+  { id:1,  name:"Read training checklist PDF",                        sec:"Phase 1 — Analysis & Video Prep", tag:"critical",     def:"completed" },
+  { id:2,  name:"Read & analyze all 19 SRT transcript files",         sec:"Phase 1 — Analysis & Video Prep", tag:"critical",     def:"completed" },
+  { id:3,  name:"Build Training Curriculum Map document",             sec:"Phase 1 — Analysis & Video Prep", tag:"critical",     def:"completed" },
+  { id:4,  name:"Set up Power Platform environment from scratch",     sec:"Phase 2 — Foundation",            tag:"critical",     def:"completed" },
+  { id:5,  name:"Build Power Pages portal HTML/CSS — all pages",      sec:"Phase 2 — Foundation",            tag:"critical",     def:"completed" },
+  { id:6,  name:"Build Manager Intake Form (Power Apps)",             sec:"Pre-Boarding & Forms",            tag:"critical",     def:"pending"   },
+  { id:7,  name:"Build pre-boarding portal experience (pre-Day 1)",   sec:"Pre-Boarding & Forms",            tag:"critical",     def:"pending"   },
+  { id:8,  name:"Build e-signature flow — HIPAA acknowledgment",      sec:"Pre-Boarding & Forms",            tag:"critical",     def:"pending"   },
+  { id:9,  name:"Build HIPAA training certificate & audit trail",     sec:"Pre-Boarding & Forms",            tag:"critical",     def:"pending"   },
+  { id:10, name:"Build IT provisioning checklist for manager",        sec:"Pre-Boarding & Forms",            tag:"critical",     def:"pending"   },
+  { id:11, name:"Build automated reminders & escalation flows",       sec:"Automation & Compliance",         tag:"critical",     def:"pending"   },
+  { id:12, name:"Build completion certificate (auto-generated PDF)",  sec:"Automation & Compliance",         tag:"critical",     def:"pending"   },
+  { id:16, name:"Build annual HIPAA re-training trigger",             sec:"Automation & Compliance",         tag:"critical",     def:"pending"   },
+  { id:17, name:"Review & publish closed captions (ADA/508)",         sec:"Automation & Compliance",         tag:"critical",     def:"pending"   },
+  { id:18, name:"Build content update & re-training notifications",   sec:"Automation & Compliance",         tag:"critical",     def:"pending"   },
+  { id:13, name:"Build 30/60/90-day milestone plan page",             sec:"Content & UX",                    tag:"critical",     def:"pending"   },
+  { id:14, name:"Add welcome video from leadership (on dashboard)",   sec:"Content & UX",                    tag:"critical",     def:"pending"   },
+  { id:15, name:"Build team introduction / org chart page",           sec:"Content & UX",                    tag:"critical",     def:"pending"   },
+  { id:19, name:"Set up buddy/mentor assignment system",              sec:"Nice-to-Have",                    tag:"nice-to-have", def:"pending"   },
+  { id:20, name:"Build searchable FAQ / knowledge base page",         sec:"Nice-to-Have",                    tag:"nice-to-have", def:"pending"   },
+  { id:21, name:"Build performance benchmarks page",                  sec:"Nice-to-Have",                    tag:"nice-to-have", def:"pending"   },
+  { id:22, name:"Build supervisor independence sign-off workflow",    sec:"Nice-to-Have",                    tag:"nice-to-have", def:"pending"   },
+  { id:23, name:"Add module-level discussion / Q&A comments",         sec:"Nice-to-Have",                    tag:"nice-to-have", def:"pending"   },
+  { id:24, name:"Build randomized quiz bank for modules",             sec:"Nice-to-Have",                    tag:"nice-to-have", def:"pending"   },
+  { id:25, name:"Optimize portal for mobile & offline access",        sec:"Nice-to-Have",                    tag:"nice-to-have", def:"pending"   },
+];
+const SEC_COLORS = {
+  "Phase 1 — Analysis & Video Prep": "#22c55e",
+  "Phase 2 — Foundation":            "#22c55e",
+  "Pre-Boarding & Forms":            "#2E75B6",
+  "Automation & Compliance":         "#C55A11",
+  "Content & UX":                    "#1F3864",
+  "Nice-to-Have":                    "#6f42c1",
+};
+
+// ── MSAL SETUP ─────────────────────────────────────────────
+const msalInstance = new msal.PublicClientApplication({
+  auth: {
+    clientId:    CONFIG.clientId,
+    authority:   `https://login.microsoftonline.com/${CONFIG.tenantId}`,
+    redirectUri: window.location.origin + window.location.pathname,
+  },
+  cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: true },
+});
+
+const SP_SCOPES = [`${CONFIG.siteUrl.split('/').slice(0,3).join('/')}/AllSites.Write`];
+let currentAccount = null;
+
+async function getToken() {
+  try {
+    const res = await msalInstance.acquireTokenSilent({ scopes: SP_SCOPES, account: currentAccount });
+    return res.accessToken;
+  } catch(e) {
+    if (e instanceof msal.InteractionRequiredAuthError) {
+      const res = await msalInstance.acquireTokenPopup({ scopes: SP_SCOPES });
+      currentAccount = res.account;
+      return res.accessToken;
+    }
+    throw e;
+  }
+}
+
+// ── SIGN IN / OUT ───────────────────────────────────────────
+async function signIn() {
+  try {
+    const res = await msalInstance.loginPopup({ scopes: ['User.Read', ...SP_SCOPES] });
+    currentAccount = res.account;
+    await startApp();
+  } catch(e) {
+    document.getElementById('auth-error').textContent = 'Sign in failed: ' + (e.message || e);
+  }
+}
+
+function signOut() {
+  msalInstance.logoutPopup({ account: currentAccount });
+}
+
+// ── SHAREPOINT API ─────────────────────────────────────────
+let spItemId = null;
+
+async function spApi(method, path, body=null) {
+  const token = await getToken();
+  const headers = {
+    'Authorization': `Bearer ${token}`,
+    'Accept':        'application/json;odata=nometadata',
+  };
+  if (body !== null) headers['Content-Type'] = 'application/json;odata=nometadata';
+  if (method === 'PATCH') headers['IF-MATCH'] = '*';
+  const url = `${CONFIG.siteUrl}/_api/web/lists/getbytitle('${CONFIG.listName}')/items${path}`;
+  const opts = { method, headers };
+  if (body !== null) opts.body = JSON.stringify(body);
+  const res = await fetch(url, opts);
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`SP ${method} ${res.status}: ${txt.substring(0,300)}`);
+  }
+  if (method === 'GET' || method === 'POST') {
+    const txt = await res.text();
+    return txt ? JSON.parse(txt) : null;
+  }
+  return null;
+}
+
+async function loadFromSP() {
+  const data = await spApi('GET', `?$filter=Title eq 'v1'&$select=Id,StateData&$top=1`);
+  if (data && data.value && data.value.length > 0) {
+    spItemId = data.value[0].Id;
+    return JSON.parse(data.value[0].StateData || '{}');
+  }
+  // First run — create the record
+  const created = await spApi('POST', '', { Title: 'v1', StateData: '{}' });
+  spItemId = created ? created.Id : null;
+  return {};
+}
+
+let saveTimer = null;
+let isSaving = false;
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  setSyncPill('saving', '&#9998; Saving...');
+  saveTimer = setTimeout(saveToSP, 1200);
+}
+
+async function saveToSP() {
+  if (!spItemId || isSaving) return;
+  isSaving = true;
+  try {
+    const taskStates = {};
+    TASKS.forEach(t => taskStates[t.id] = t.status);
+    await spApi('PATCH', `(${spItemId})`, {
+      StateData: JSON.stringify({
+        tasks:   taskStates,
+        notes:   notes,
+        meta: {
+          lastUpdatedBy: currentAccount?.name || currentAccount?.username || 'Unknown',
+          lastUpdatedAt: new Date().toISOString(),
+        }
+      })
+    });
+    setSyncPill('saved', '&#10003; Saved');
+    setTimeout(() => setSyncPill('', '&#128274; Connected'), 3000);
+  } catch(e) {
+    setSyncPill('error', '&#9888; Save failed');
+    console.error('Save error:', e);
+  }
+  isSaving = false;
+}
+
+async function forceRefresh() {
+  setSyncPill('saving', '&#8635; Refreshing...');
+  try {
+    const remote = await loadFromSP();
+    applyRemoteState(remote);
+    renderAll();
+    setSyncPill('saved', '&#10003; Up to date');
+    setTimeout(() => setSyncPill('', '&#128274; Connected'), 2000);
+  } catch(e) {
+    setSyncPill('error', '&#9888; Refresh failed');
+  }
+}
+
+function setSyncPill(cls, html) {
+  const p = document.getElementById('sync-pill');
+  p.className = 'sync-pill' + (cls ? ' ' + cls : '');
+  p.innerHTML = html;
+}
+
+// ── STATE ──────────────────────────────────────────────────
+let notes = {};
+
+function applyRemoteState(remote) {
+  if (!remote) return;
+  if (remote.tasks) {
+    TASKS.forEach(t => { t.status = remote.tasks[t.id] || t.def; });
+  } else {
+    TASKS.forEach(t => t.status = t.def);
+  }
+  notes = remote.notes || {};
+  // Update banner
+  if (remote.meta && remote.meta.lastUpdatedBy) {
+    document.getElementById('meta-user').textContent = remote.meta.lastUpdatedBy;
+    document.getElementById('meta-time').textContent = new Date(remote.meta.lastUpdatedAt).toLocaleString();
+    document.getElementById('update-banner').style.display = 'flex';
+  }
+}
+
+function hasNote(id) { const n = notes[id]; return n && (n.text?.trim() || n.links?.length); }
+function getNote(id) { return notes[id] || { text:'', links:[] }; }
+
+// ── RENDER ─────────────────────────────────────────────────
+let chart = null;
+function renderStats() {
+  const total = TASKS.length;
+  const done  = TASKS.filter(t => t.status==='completed').length;
+  const inp   = TASKS.filter(t => t.status==='in_progress').length;
+  const pend  = TASKS.filter(t => t.status==='pending').length;
+  const nth   = TASKS.filter(t => t.tag==='nice-to-have').length;
+  const pct   = Math.round((done/total)*100);
+  document.getElementById('stats').innerHTML = `
+    <div class="stat" style="border-top-color:#1F3864;"><div class="stat-n" style="color:#1F3864;">${total}</div><div class="stat-l">Total Tasks</div></div>
+    <div class="stat" style="border-top-color:#22c55e;"><div class="stat-n" style="color:#22c55e;">${done}</div><div class="stat-l">Completed</div></div>
+    <div class="stat" style="border-top-color:#C55A11;"><div class="stat-n" style="color:#C55A11;">${inp}</div><div class="stat-l">In Progress</div></div>
+    <div class="stat" style="border-top-color:#64748b;"><div class="stat-n" style="color:#64748b;">${pend}</div><div class="stat-l">Pending</div></div>
+    <div class="stat" style="border-top-color:#6f42c1;"><div class="stat-n" style="color:#6f42c1;">${nth}</div><div class="stat-l">Nice-to-Have</div></div>`;
+  document.getElementById('pbar').style.width = pct+'%';
+  document.getElementById('ptxt').textContent = pct+'% complete ('+done+'/'+total+' tasks)';
+  if (chart) chart.destroy();
+  chart = new Chart(document.getElementById('donut').getContext('2d'), {
+    type:'doughnut',
+    data:{ labels:['Done','In Progress','Pending'], datasets:[{ data:[done,inp,pend], backgroundColor:['#22c55e','#C55A11','#e2e8f0'], borderWidth:0, hoverOffset:4 }] },
+    options:{ cutout:'70%', plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>' '+c.label+': '+c.raw}} }, animation:{duration:300} }
+  });
+  document.getElementById('cleg').innerHTML = '<span style="color:#22c55e">&#9632;</span> Done &nbsp;&nbsp;<span style="color:#C55A11">&#9632;</span> In Progress &nbsp;&nbsp;<span style="color:#ccc">&#9632;</span> Pending';
+}
+
+let af='all', as_='all', openNotes=new Set(), saveTimers={};
+
+function renderTasks() {
+  const filtered = TASKS.filter(t => (af==='all'||t.tag===af) && (as_==='all'||t.status===as_));
+  const sections = [...new Set(filtered.map(t => t.sec))];
+  if (!sections.length) { document.getElementById('tasklist').innerHTML='<div style="text-align:center;padding:32px;color:#94a3b8;">No tasks match the selected filters.</div>'; return; }
+  document.getElementById('tasklist').innerHTML = sections.map(sec => {
+    const tasks=filtered.filter(t=>t.sec===sec), allInSec=TASKS.filter(t=>t.sec===sec);
+    const secDone=allInSec.filter(t=>t.status==='completed').length, col=SEC_COLORS[sec]||'#2E75B6';
+    return `
+      <div class="sec-hdr">
+        <span class="sec-name" style="color:${col};">${sec}</span>
+        <span class="sec-cnt" style="background:${col}18;color:${col};">${secDone}/${allInSec.length} done</span>
+      </div>
+      ${tasks.map(t => {
+        const isNth=t.tag==='nice-to-have', icon=t.status==='completed'?'&#10003;':t.status==='in_progress'?'&#9654;':'';
+        const badge=t.status==='completed'?'<span class="tbadge b-done">Done</span>':t.status==='in_progress'?'<span class="tbadge b-prog">In Progress</span>':'<span class="tbadge b-pend">Pending</span>';
+        const hn=hasNote(t.id), npOpen=openNotes.has(t.id), n=getNote(t.id);
+        const linkChips=n.links.map((l,i)=>`<div class="link-chip"><a href="${escH(l.url)}" target="_blank">${escH(l.label||l.url)}</a><button class="link-rm" onclick="removeLink(${t.id},${i})">&times;</button></div>`).join('');
+        return `
+          <div class="task-wrap ${npOpen?'':'closed'}" id="wrap-${t.id}">
+            <div class="task ${t.status}${isNth?' nth':''}">
+              <div class="tcheck" onclick="cycleTask(${t.id})">${icon}</div>
+              <span class="tid" onclick="cycleTask(${t.id})">#${t.id}</span>
+              <span class="tname" onclick="cycleTask(${t.id})">${t.name}</span>
+              ${badge}
+              <button class="note-btn${hn?' has-notes':''}${npOpen?' open':''}" onclick="toggleNotes(${t.id})" title="Notes & links">&#9997;${hn?'<div class="note-dot"></div>':''}</button>
+            </div>
+            <div class="notes-panel${npOpen?' open':''}" id="np-${t.id}">
+              <div class="np-ttl">&#128203; Notes &amp; Links — #${t.id} ${t.name}</div>
+              <textarea class="notes-ta" id="ta-${t.id}" placeholder="Notes, blockers, decisions, questions..." onInput="schedNotesSave(${t.id})">${escH(n.text)}</textarea>
+              <span class="save-ind" id="si-${t.id}">&#10003; Saved</span>
+              <div class="links-section">
+                <div class="links-lbl">&#128279; Links</div>
+                <div class="link-chips" id="lc-${t.id}">${linkChips||'<span style="font-size:.75rem;color:#b0bec5;">No links yet.</span>'}</div>
+                <div class="add-link-form">
+                  <input class="inp-label" type="text" id="ll-${t.id}" placeholder="Label">
+                  <input class="inp-url"   type="url"  id="lu-${t.id}" placeholder="https://...">
+                  <button class="add-btn" onclick="addLink(${t.id})">+ Add</button>
+                </div>
+              </div>
+              <div class="np-footer"><button class="clear-btn" onclick="clearNote(${t.id})">&#128465; Clear</button></div>
+            </div>
+          </div>`;
+      }).join('')}`;
+  }).join('');
+}
+
+function renderAll() { renderStats(); renderTasks(); }
+function escH(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── TASK ACTIONS ───────────────────────────────────────────
+window.cycleTask = id => {
+  const t=TASKS.find(x=>x.id===id); if(!t) return;
+  t.status={pending:'in_progress',in_progress:'completed',completed:'pending'}[t.status];
+  renderAll(); scheduleSave();
+};
+window.toggleNotes = id => { if(openNotes.has(id)) openNotes.delete(id); else openNotes.add(id); renderTasks(); };
+
+// ── NOTE ACTIONS ───────────────────────────────────────────
+window.schedNotesSave = id => {
+  clearTimeout(saveTimers[id]);
+  saveTimers[id] = setTimeout(() => {
+    const ta=document.getElementById('ta-'+id); if(!ta) return;
+    if(!notes[id]) notes[id]={text:'',links:[]};
+    notes[id].text=ta.value;
+    const si=document.getElementById('si-'+id);
+    if(si){si.classList.add('show'); setTimeout(()=>si.classList.remove('show'),1500);}
+    scheduleSave();
+  }, 700);
+};
+window.addLink = id => {
+  const ll=document.getElementById('ll-'+id), lu=document.getElementById('lu-'+id);
+  if(!lu||!lu.value.trim()) return;
+  let url=lu.value.trim();
+  if(!/^https?:\/\//i.test(url)) url='https://'+url;
+  if(!notes[id]) notes[id]={text:'',links:[]};
+  notes[id].links.push({label:ll.value.trim()||url, url});
+  ll.value=''; lu.value='';
+  renderLinkChips(id); scheduleSave();
+};
+window.removeLink = (id,idx) => {
+  if(!notes[id]) return;
+  notes[id].links.splice(idx,1);
+  renderLinkChips(id); scheduleSave();
+};
+function renderLinkChips(id) {
+  const lc=document.getElementById('lc-'+id); if(!lc) return;
+  const n=getNote(id);
+  lc.innerHTML=n.links.length ? n.links.map((l,i)=>`<div class="link-chip"><a href="${escH(l.url)}" target="_blank">${escH(l.label||l.url)}</a><button class="link-rm" onclick="removeLink(${id},${i})">&times;</button></div>`).join('') : '<span style="font-size:.75rem;color:#b0bec5;">No links yet.</span>';
+}
+window.clearNote = id => {
+  if(!confirm('Clear all notes and links for this task?')) return;
+  notes[id]={text:'',links:[]}; scheduleSave(); renderTasks();
+};
+
+// ── TABS & FILTERS ─────────────────────────────────────────
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); document.querySelectorAll('.tab-pane').forEach(p=>{p.classList.toggle('on',p.id==='pane-'+btn.dataset.t);}); });
+});
+document.querySelectorAll('[data-f]').forEach(btn => {
+  btn.addEventListener('click',()=>{ document.querySelectorAll('[data-f]').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); af=btn.dataset.f; renderTasks(); });
+});
+document.querySelectorAll('[data-s]').forEach(btn => {
+  btn.addEventListener('click',()=>{ document.querySelectorAll('[data-s]').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); as_=btn.dataset.s; renderTasks(); });
+});
+
+// ── APP START ──────────────────────────────────────────────
+async function startApp() {
+  setLoading('Loading dashboard data...');
+  try {
+    // Update header
+    const name = currentAccount.name || currentAccount.username;
+    document.getElementById('user-name').textContent = name;
+    document.getElementById('user-initials').textContent = name.split(' ').map(w=>w[0]).join('').toUpperCase().substring(0,2);
+    // Load from SharePoint
+    const remote = await loadFromSP();
+    applyRemoteState(remote);
+    // Show app
+    hideLoading();
+    document.getElementById('app').style.display = 'block';
+    renderAll();
+    // Auto-refresh every 60 seconds
+    setInterval(forceRefresh, 60000);
+  } catch(e) {
+    hideLoading();
+    document.getElementById('app').style.display = 'block';
+    setSyncPill('error', '&#9888; SP error');
+    TASKS.forEach(t => t.status = t.def);
+    renderAll();
+    console.error('startApp error:', e);
+  }
+}
+
+function setLoading(msg) {
+  document.getElementById('loading').style.display='flex';
+  document.getElementById('loading-msg').textContent=msg;
+}
+function hideLoading() { document.getElementById('loading').style.display='none'; }
+
+// ── INIT ───────────────────────────────────────────────────
+(async function init() {
+  try {
+    await msalInstance.handleRedirectPromise();
+    const accounts = msalInstance.getAllAccounts();
+    if (accounts.length > 0) {
+      currentAccount = accounts[0];
+      await startApp();
+    } else {
+      hideLoading();
+      document.getElementById('signin-wrap').style.display = 'flex';
+    }
+  } catch(e) {
+    hideLoading();
+    document.getElementById('signin-wrap').style.display = 'flex';
+    document.getElementById('auth-error').textContent = e.message || 'Authentication error.';
+  }
+})();
+</script>
+</body>
+</html>

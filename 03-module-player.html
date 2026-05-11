@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<!--
+  DT-TRAK MEDICAL CODER TRAINING PORTAL
+  Page: Module Player (Template — used for all 25 modules)
+  ─────────────────────────────────────────────────────────────────────────
+  POWER PAGES INSTRUCTIONS:
+  1. Create ONE page called "Module Player" with a dynamic URL like /module/{id}
+  2. Connect a Dataverse "Training_Module" record to the page
+  3. Replace hardcoded content below with Liquid variables:
+       {{ record.dt_title }}, {{ record.dt_stream_url }},
+       {{ record.dt_sop_url }}, {{ record.dt_description }}, etc.
+  4. The Stream video embed: replace the src URL with {{ record.dt_stream_url }}
+  5. The quiz section connects to a separate "Module_Quiz" Dataverse table
+  ─────────────────────────────────────────────────────────────────────────
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MOD07 — Royal TS &amp; EHR Remote Access · DT-Trak Training</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --dt-navy:#1F3864; --dt-blue:#2E75B6; --dt-blue-lt:#D6E4F0;
+      --dt-green:#375623; --dt-green-lt:#E2EFDA;
+      --dt-bg:#F0F4FA; --dt-white:#FFFFFF; --dt-gray:#6C757D; --dt-border:#DEE2E6;
+    }
+    * { font-family:'Inter',sans-serif; }
+    body { background:var(--dt-bg); margin:0; }
+
+    /* ── Nav ── */
+    .portal-nav {
+      background:var(--dt-navy); padding:0 1.5rem; height:60px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100; box-shadow:0 2px 6px rgba(0,0,0,.25);
+    }
+    .portal-nav .brand { color:#fff; font-weight:700; font-size:1.05rem; text-decoration:none; display:flex; align-items:center; gap:.6rem; }
+    .badge-portal { background:var(--dt-blue); font-size:.65rem; font-weight:600; padding:.2rem .5rem; border-radius:3px; }
+    .nav-links { display:flex; gap:.2rem; }
+    .nav-links a { color:rgba(255,255,255,.78); text-decoration:none; padding:.4rem .75rem; border-radius:4px; font-size:.85rem; font-weight:500; }
+    .nav-links a:hover { background:rgba(255,255,255,.12); color:#fff; }
+    .nav-user { display:flex; align-items:center; gap:.75rem; color:rgba(255,255,255,.85); font-size:.85rem; }
+    .nav-user .avatar { width:32px; height:32px; background:var(--dt-blue); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; color:#fff; }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb-bar { background:var(--dt-white); border-bottom:1px solid var(--dt-border); padding:.6rem 2rem; font-size:.82rem; }
+    .breadcrumb-bar a { color:var(--dt-blue); text-decoration:none; }
+    .breadcrumb-bar span { color:var(--dt-gray); margin:0 .4rem; }
+
+    /* ── Layout ── */
+    .player-layout { display:grid; grid-template-columns:1fr 320px; gap:1.5rem; padding:1.5rem 2rem; max-width:1200px; margin:0 auto; }
+    @media(max-width:960px) { .player-layout { grid-template-columns:1fr; } }
+    @media(max-width:768px) { .player-layout { padding:1rem; } }
+
+    /* ── Video Panel ── */
+    .video-wrap {
+      background:#000; border-radius:10px; overflow:hidden;
+      aspect-ratio:16/9; position:relative;
+    }
+    .video-wrap iframe { width:100%; height:100%; border:none; }
+    /* Placeholder for when Stream URL isn't set yet */
+    .video-placeholder {
+      width:100%; height:100%; display:flex; flex-direction:column;
+      align-items:center; justify-content:center; color:rgba(255,255,255,.6);
+      background:linear-gradient(135deg,#1F3864,#2E75B6);
+    }
+    .video-placeholder i { font-size:3.5rem; margin-bottom:.75rem; opacity:.7; }
+    .video-placeholder p { font-size:.9rem; opacity:.6; margin:0; }
+
+    /* ── Module Info ── */
+    .module-info { background:var(--dt-white); border-radius:10px; padding:1.25rem 1.5rem; box-shadow:0 1px 5px rgba(31,56,100,.09); margin-top:1rem; }
+    .module-info .mod-header { display:flex; align-items:flex-start; gap:1rem; margin-bottom:.85rem; }
+    .section-tag { font-size:.7rem; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--dt-blue); background:var(--dt-blue-lt); padding:.2rem .6rem; border-radius:3px; white-space:nowrap; flex-shrink:0; }
+    .module-info h2 { font-size:1.15rem; font-weight:700; color:var(--dt-navy); margin:0; }
+    .module-info .desc { font-size:.88rem; color:#495057; line-height:1.6; margin:.5rem 0 1rem; }
+    .module-meta-row { display:flex; gap:1.25rem; flex-wrap:wrap; font-size:.8rem; color:var(--dt-gray); }
+    .meta-item { display:flex; align-items:center; gap:.35rem; }
+    .meta-item i { color:var(--dt-blue); }
+
+    /* ── Key Concepts ── */
+    .key-concepts { background:var(--dt-blue-lt); border-radius:8px; padding:1rem 1.25rem; margin-top:1rem; }
+    .key-concepts h6 { font-size:.8rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--dt-navy); margin:0 0 .6rem; }
+    .concept-tags { display:flex; flex-wrap:wrap; gap:.4rem; }
+    .concept-tag { background:#fff; border:1px solid rgba(46,117,182,.25); color:var(--dt-blue); font-size:.77rem; font-weight:500; padding:.2rem .55rem; border-radius:4px; }
+
+    /* ── Navigation Buttons ── */
+    .nav-buttons { display:flex; gap:.75rem; margin-top:1.25rem; }
+    .btn-prev { background:#fff; border:1px solid var(--dt-border); color:var(--dt-navy); padding:.6rem 1.1rem; border-radius:6px; font-size:.85rem; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:.4rem; }
+    .btn-prev:hover { background:var(--dt-blue-lt); }
+    .btn-next { background:var(--dt-blue); border:none; color:#fff; padding:.6rem 1.25rem; border-radius:6px; font-size:.85rem; font-weight:600; text-decoration:none; display:flex; align-items:center; gap:.4rem; }
+    .btn-next:hover { background:var(--dt-navy); }
+    .btn-complete { background:var(--dt-green); border:none; color:#fff; padding:.6rem 1.4rem; border-radius:6px; font-size:.85rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:.4rem; margin-left:auto; }
+    .btn-complete:hover { background:#2E4A1B; }
+
+    /* ── Sidebar ── */
+    .sidebar { display:flex; flex-direction:column; gap:1rem; }
+    .sidebar-card { background:var(--dt-white); border-radius:10px; box-shadow:0 1px 5px rgba(31,56,100,.09); padding:1.1rem 1.25rem; }
+    .sidebar-card h6 { font-size:.78rem; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--dt-navy); margin:0 0 .75rem; padding-bottom:.5rem; border-bottom:2px solid var(--dt-blue-lt); }
+
+    /* Chapter list */
+    .chapter-item { display:flex; align-items:flex-start; gap:.6rem; padding:.5rem 0; border-bottom:1px solid #F1F3F5; cursor:pointer; transition:color .12s; }
+    .chapter-item:last-child { border-bottom:none; }
+    .chapter-item:hover { color:var(--dt-blue); }
+    .chapter-item.active { color:var(--dt-blue); }
+    .chapter-item .ts { font-size:.72rem; font-weight:600; color:var(--dt-blue); background:var(--dt-blue-lt); padding:.15rem .4rem; border-radius:3px; white-space:nowrap; flex-shrink:0; margin-top:.1rem; }
+    .chapter-item .chapter-title { font-size:.82rem; line-height:1.4; }
+    .chapter-item.active .chapter-title { font-weight:600; color:var(--dt-blue); }
+
+    /* SOP card */
+    .sop-card { background:linear-gradient(135deg,#E2EFDA,#C6E0B4); border-radius:8px; padding:.9rem 1rem; display:flex; align-items:center; gap:.75rem; }
+    .sop-card i { font-size:1.4rem; color:var(--dt-green); flex-shrink:0; }
+    .sop-card .sop-info h6 { font-size:.85rem; font-weight:700; color:var(--dt-green); margin:0 0 .15rem; }
+    .sop-card .sop-info p { font-size:.75rem; color:#2D4A1F; margin:0; }
+    .btn-sop { background:var(--dt-green); color:#fff; border:none; padding:.45rem .9rem; border-radius:6px; font-size:.8rem; font-weight:600; text-decoration:none; white-space:nowrap; }
+    .btn-sop:hover { background:#2E4A1B; color:#fff; }
+
+    /* Quiz card */
+    .quiz-card { border:2px solid var(--dt-blue-lt); border-radius:8px; padding:.9rem 1rem; }
+    .quiz-card .quiz-status { font-size:.75rem; font-weight:600; color:var(--dt-gray); margin-bottom:.4rem; }
+    .quiz-card p { font-size:.83rem; color:#495057; margin:0 0 .75rem; }
+    .btn-quiz { background:var(--dt-blue); color:#fff; border:none; padding:.45rem .9rem; border-radius:6px; font-size:.82rem; font-weight:600; width:100%; cursor:pointer; }
+    .btn-quiz:hover { background:var(--dt-navy); }
+
+    /* ── Quiz Section (below video) ── */
+    .quiz-section { background:var(--dt-white); border-radius:10px; padding:1.5rem; box-shadow:0 1px 5px rgba(31,56,100,.09); margin-top:1rem; }
+    .quiz-section h4 { font-size:1.05rem; font-weight:700; color:var(--dt-navy); margin:0 0 .3rem; }
+    .quiz-section p { font-size:.85rem; color:var(--dt-gray); margin:0 0 1.25rem; }
+    .quiz-q { margin-bottom:1.25rem; }
+    .quiz-q .q-text { font-size:.9rem; font-weight:600; color:var(--dt-navy); margin-bottom:.6rem; }
+    .quiz-option { display:flex; align-items:center; gap:.6rem; padding:.5rem .7rem; border:1px solid var(--dt-border); border-radius:6px; margin-bottom:.4rem; cursor:pointer; font-size:.85rem; transition:all .12s; }
+    .quiz-option:hover { background:var(--dt-blue-lt); border-color:var(--dt-blue); }
+    .quiz-option input[type=radio] { accent-color:var(--dt-blue); flex-shrink:0; }
+    .btn-submit-quiz { background:var(--dt-blue); color:#fff; border:none; padding:.6rem 1.5rem; border-radius:6px; font-weight:600; font-size:.88rem; cursor:pointer; margin-top:.5rem; }
+    .btn-submit-quiz:hover { background:var(--dt-navy); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="portal-nav">
+  <a href="01-dashboard.html" class="brand">
+    <i class="bi bi-mortarboard-fill" style="font-size:1.3rem;color:#fff;"></i>
+    DT-Trak Consulting <span class="badge-portal">Training Portal</span>
+  </a>
+  <div class="nav-links d-none d-md-flex">
+    <a href="01-dashboard.html"><i class="bi bi-house-fill me-1"></i>Dashboard</a>
+    <a href="02-modules.html"><i class="bi bi-collection-play me-1"></i>Modules</a>
+    <a href="04-resources.html"><i class="bi bi-link-45deg me-1"></i>Resources</a>
+    <a href="#"><i class="bi bi-chat-dots me-1"></i>Help</a>
+  </div>
+  <div class="nav-user">
+    <span class="d-none d-sm-inline">Tanya Fabre</span>
+    <div class="avatar">TF</div>
+  </div>
+</nav>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb-bar">
+  <a href="01-dashboard.html">Dashboard</a>
+  <span>›</span>
+  <a href="02-modules.html">Modules</a>
+  <span>›</span>
+  <a href="02-modules.html#s2">Section 2 — Systems &amp; Tools</a>
+  <span>›</span>
+  <strong>MOD07 — Royal TS &amp; EHR Remote Access</strong>
+</div>
+
+<!-- PLAYER LAYOUT -->
+<div class="player-layout">
+
+  <!-- ── Main Content ── -->
+  <div>
+    <!-- Video -->
+    <div class="video-wrap">
+      <!-- POWER PAGES: Replace src with {{ record.dt_stream_url }} -->
+      <!-- Microsoft Stream embed URL format:
+           https://web.microsoftstream.com/embed/video/VIDEO-ID?autoplay=false&showinfo=true
+           Get this from Stream → Share → Embed → Copy embed code → extract src URL -->
+      <div class="video-placeholder">
+        <i class="bi bi-play-circle"></i>
+        <p>Microsoft Stream video loads here</p>
+        <p style="font-size:.78rem;margin-top:.3rem;">Paste Stream embed URL after uploading MOD07 video</p>
+      </div>
+      <!-- When Stream URL is ready, replace the div above with:
+      <iframe src="https://web.microsoftstream.com/embed/video/YOUR-VIDEO-ID?autoplay=false&showinfo=true"
+              allowfullscreen allow="autoplay; fullscreen"></iframe>
+      -->
+    </div>
+
+    <!-- Module Info -->
+    <div class="module-info">
+      <div class="mod-header">
+        <span class="section-tag">Section 2 — Systems &amp; Tools</span>
+      </div>
+      <h2>MOD07 — Royal TS &amp; EHR Remote Access</h2>
+      <!-- POWER PAGES: {{ record.dt_title }} -->
+      <div class="desc">
+        Use Royal TS to remotely access the Electronic Health Record (EHR) systems at client facilities. Covers the D1 domain login convention, how to find the EHR icon if not loaded, the critical importance of logging off properly (not X-ing out), and RPMS initial access basics.
+      </div>
+      <!-- POWER PAGES: {{ record.dt_description }} -->
+      <div class="module-meta-row">
+        <span class="meta-item"><i class="bi bi-clock"></i> ~26 minutes</span>
+        <span class="meta-item"><i class="bi bi-collection-play"></i> 6 chapters</span>
+        <span class="meta-item"><i class="bi bi-file-earmark-text"></i> SOP-07</span>
+        <span class="meta-item"><i class="bi bi-patch-question"></i> 5-question quiz</span>
+      </div>
+    </div>
+
+    <!-- Key Concepts -->
+    <div class="module-info" style="margin-top:.75rem;">
+      <div class="key-concepts">
+        <h6><i class="bi bi-lightbulb me-1"></i> Key Concepts in This Module</h6>
+        <div class="concept-tags">
+          <span class="concept-tag">Royal TS navigation</span>
+          <span class="concept-tag">D1 domain login</span>
+          <span class="concept-tag">Proper remote desktop logoff</span>
+          <span class="concept-tag">RPMS initial access</span>
+          <span class="concept-tag">Multi-facility access</span>
+          <span class="concept-tag">Finding EHR icon on desktop</span>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="nav-buttons">
+        <a href="03-module-player.html" class="btn-prev"><i class="bi bi-arrow-left"></i> MOD06 — Access/Verify</a>
+        <a href="03-module-player.html" class="btn-next">MOD08 — NextGen <i class="bi bi-arrow-right"></i></a>
+        <button class="btn-complete" onclick="markComplete()">
+          <i class="bi bi-check-circle-fill"></i> Mark Complete
+        </button>
+      </div>
+    </div>
+
+    <!-- Quiz Section -->
+    <div class="quiz-section" id="quizSection">
+      <h4><i class="bi bi-patch-question me-2" style="color:var(--dt-blue);"></i>Module Quiz</h4>
+      <p>Answer all 5 questions to complete this module. You need 80% to pass.</p>
+
+      <div class="quiz-q">
+        <div class="q-text">1. What domain convention is used when logging into most facility EHR systems through Royal TS?</div>
+        <label class="quiz-option"><input type="radio" name="q1"> DT-Trak\username</label>
+        <label class="quiz-option"><input type="radio" name="q1"> D1\username</label>
+        <label class="quiz-option"><input type="radio" name="q1"> ADMIN\username</label>
+        <label class="quiz-option"><input type="radio" name="q1"> No domain — just the username</label>
+      </div>
+      <div class="quiz-q">
+        <div class="q-text">2. When you are finished coding for the day, what is the correct way to exit a Royal TS remote desktop session?</div>
+        <label class="quiz-option"><input type="radio" name="q2"> Click the X in the Royal TS window</label>
+        <label class="quiz-option"><input type="radio" name="q2"> Close your laptop lid</label>
+        <label class="quiz-option"><input type="radio" name="q2"> Log off from the remote desktop — do NOT just X out</label>
+        <label class="quiz-option"><input type="radio" name="q2"> Disconnect from Wi-Fi</label>
+      </div>
+      <div class="quiz-q">
+        <div class="q-text">3. If the EHR shortcut icon is not visible on the remote desktop, what should you do?</div>
+        <label class="quiz-option"><input type="radio" name="q3"> Immediately contact the Help Desk</label>
+        <label class="quiz-option"><input type="radio" name="q3"> Check the desktop folders and taskbar for the EHR application icon</label>
+        <label class="quiz-option"><input type="radio" name="q3"> Log out and log back in with a different username</label>
+        <label class="quiz-option"><input type="radio" name="q3"> Switch to a different facility</label>
+      </div>
+      <div class="quiz-q">
+        <div class="q-text">4. Which EHR system uses RPMS?</div>
+        <label class="quiz-option"><input type="radio" name="q4"> RSBCIHI</label>
+        <label class="quiz-option"><input type="radio" name="q4"> NVIH (Northern Valley Indian Health)</label>
+        <label class="quiz-option"><input type="radio" name="q4"> SSHWC</label>
+        <label class="quiz-option"><input type="radio" name="q4"> All three facilities</label>
+      </div>
+      <div class="quiz-q">
+        <div class="q-text">5. Why is it important to properly log off the remote desktop rather than just closing the Royal TS window?</div>
+        <label class="quiz-option"><input type="radio" name="q5"> It saves your coding work automatically</label>
+        <label class="quiz-option"><input type="radio" name="q5"> Closing without logging off can leave your session open on the server, which is a HIPAA security risk</label>
+        <label class="quiz-option"><input type="radio" name="q5"> It speeds up the next login</label>
+        <label class="quiz-option"><input type="radio" name="q5"> It is required by AAPC certification rules</label>
+      </div>
+
+      <button class="btn-submit-quiz" onclick="submitQuiz()">Submit Quiz</button>
+    </div>
+
+  </div><!-- end main col -->
+
+  <!-- ── Sidebar ── -->
+  <div class="sidebar">
+
+    <!-- Chapters -->
+    <div class="sidebar-card">
+      <h6><i class="bi bi-list-ol me-1"></i> Chapters</h6>
+      <div class="chapter-item active" onclick="seekTo(0)">
+        <span class="ts">0:00</span>
+        <span class="chapter-title">Opening Royal TS and finding your facility</span>
+      </div>
+      <div class="chapter-item" onclick="seekTo(240)">
+        <span class="ts">4:00</span>
+        <span class="chapter-title">Domain username format — D1\ conventions</span>
+      </div>
+      <div class="chapter-item" onclick="seekTo(540)">
+        <span class="ts">9:00</span>
+        <span class="chapter-title">Facilities that do not use D1 domain</span>
+      </div>
+      <div class="chapter-item" onclick="seekTo(780)">
+        <span class="ts">13:00</span>
+        <span class="chapter-title">Finding the EHR icon when it is not on the desktop</span>
+      </div>
+      <div class="chapter-item" onclick="seekTo(1080)">
+        <span class="ts">18:00</span>
+        <span class="chapter-title">How to properly log off remote desktop (not X-out)</span>
+      </div>
+      <div class="chapter-item" onclick="seekTo(1320)">
+        <span class="ts">22:00</span>
+        <span class="chapter-title">RPMS remote access basics</span>
+      </div>
+    </div>
+
+    <!-- SOP -->
+    <div class="sidebar-card">
+      <h6><i class="bi bi-file-earmark-text me-1"></i> Supporting Document</h6>
+      <div class="sop-card">
+        <i class="bi bi-file-earmark-word"></i>
+        <div class="sop-info">
+          <h6>SOP-07</h6>
+          <p>Royal TS Remote Desktop Login &amp; Logoff Procedure</p>
+        </div>
+      </div>
+      <a href="#" class="btn-sop mt-2 d-block text-center">
+        <!-- POWER PAGES: href="{{ record.dt_sop_url }}" -->
+        <i class="bi bi-box-arrow-up-right me-1"></i> Open SOP Document
+      </a>
+    </div>
+
+    <!-- Quiz Sidebar -->
+    <div class="sidebar-card">
+      <h6><i class="bi bi-patch-question me-1"></i> Module Quiz</h6>
+      <div class="quiz-card">
+        <div class="quiz-status">5 Questions · 80% to Pass · Not Attempted</div>
+        <p>Complete the quiz after watching the video to unlock the next module.</p>
+        <button class="btn-quiz" onclick="document.getElementById('quizSection').scrollIntoView({behavior:'smooth'})">
+          Take Quiz <i class="bi bi-arrow-down ms-1"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="sidebar-card">
+      <h6><i class="bi bi-bar-chart me-1"></i> Your Progress</h6>
+      <div style="font-size:.83rem;color:var(--dt-gray);">
+        <div class="d-flex justify-content-between py-1 border-bottom">
+          <span>Module Status</span><span style="font-weight:600;color:#BF8F00;">In Progress</span>
+        </div>
+        <div class="d-flex justify-content-between py-1 border-bottom">
+          <span>Quiz Score</span><span style="font-weight:600;color:var(--dt-gray);">Not taken</span>
+        </div>
+        <div class="d-flex justify-content-between py-1">
+          <span>Section 2 Progress</span><span style="font-weight:600;">1 / 4</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end sidebar -->
+</div><!-- end player-layout -->
+
+<footer style="text-align:center;padding:1.5rem;font-size:.75rem;color:#6C757D;border-top:1px solid #DEE2E6;margin-top:1rem;">
+  DT-Trak Consulting, Inc. · Medical Coder Training Portal · HIPAA Compliant
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function seekTo(seconds) {
+    document.querySelectorAll('.chapter-item').forEach(el => el.classList.remove('active'));
+    event.currentTarget.classList.add('active');
+    // In live portal: call Stream player API to seek to timestamp
+    // stream.seek(seconds);
+    console.log('Seek to', seconds, 'seconds');
+  }
+  function markComplete() {
+    // POWER PAGES: POST to Dataverse dt_module_progress table
+    // Set dt_status = "Complete", dt_completed_date = today
+    if(confirm('Mark MOD07 as complete and unlock MOD08?')) {
+      alert('Module marked complete! Redirecting to MOD08...');
+      // window.location.href = '/module/mod08';
+    }
+  }
+  function submitQuiz() {
+    // POWER PAGES: Collect answers, POST to dt_quiz_response table
+    // Calculate score, show result, update dt_quiz_score on progress record
+    alert('Quiz submitted! In the live portal, your answers are saved to Dataverse and your score is calculated automatically.');
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<!--
+  DT-TRAK MEDICAL CODER TRAINING PORTAL
+  Page: Employee Dashboard (Home)
+  ─────────────────────────────────────────────────────────────────────────
+  POWER PAGES INSTRUCTIONS:
+  1. In Power Pages Studio → Pages → Add Page → "Custom Layout"
+  2. Name the page "Training Dashboard" | Set as Home page
+  3. In the page editor, add a "Custom HTML" component
+  4. Paste everything inside <body>...</body> into the HTML editor
+  5. Upload portal-styles.css to Web Files (Site Settings → Web Files)
+  6. Replace placeholder {{liquid}} tags with actual Liquid template variables
+     once your Dataverse tables are set up (see Build Guide for table schemas)
+  ─────────────────────────────────────────────────────────────────────────
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DT-Trak Training Portal — Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --dt-navy:      #1F3864;
+      --dt-blue:      #2E75B6;
+      --dt-blue-lt:   #D6E4F0;
+      --dt-green:     #375623;
+      --dt-green-lt:  #E2EFDA;
+      --dt-orange:    #C55A11;
+      --dt-red:       #C00000;
+      --dt-gold:      #BF8F00;
+      --dt-bg:        #F0F4FA;
+      --dt-white:     #FFFFFF;
+      --dt-gray:      #6C757D;
+      --dt-border:    #DEE2E6;
+      --dt-shadow:    0 2px 8px rgba(31,56,100,.10);
+    }
+    * { font-family: 'Inter', sans-serif; }
+    body { background: var(--dt-bg); margin: 0; }
+
+    /* ── Top Nav ── */
+    .portal-nav {
+      background: var(--dt-navy);
+      padding: 0 1.5rem;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    .portal-nav .brand {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.05rem;
+      letter-spacing: .3px;
+      text-decoration: none;
+      display: flex; align-items: center; gap: .6rem;
+    }
+    .portal-nav .brand .badge-portal {
+      background: var(--dt-blue);
+      font-size: .65rem;
+      font-weight: 600;
+      padding: .2rem .5rem;
+      border-radius: 3px;
+      letter-spacing: .4px;
+    }
+    .nav-links { display: flex; gap: .2rem; }
+    .nav-links a {
+      color: rgba(255,255,255,.78);
+      text-decoration: none;
+      padding: .4rem .75rem;
+      border-radius: 4px;
+      font-size: .85rem;
+      font-weight: 500;
+      transition: background .15s, color .15s;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      background: rgba(255,255,255,.12);
+      color: #fff;
+    }
+    .nav-user {
+      display: flex; align-items: center; gap: .75rem;
+      color: rgba(255,255,255,.85);
+      font-size: .85rem;
+    }
+    .nav-user .avatar {
+      width: 32px; height: 32px;
+      background: var(--dt-blue);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .85rem; color: #fff;
+    }
+
+    /* ── Welcome Banner ── */
+    .welcome-banner {
+      background: linear-gradient(135deg, var(--dt-navy) 0%, var(--dt-blue) 100%);
+      color: #fff;
+      padding: 2rem 2rem 1.5rem;
+    }
+    .welcome-banner h1 { font-size: 1.5rem; font-weight: 700; margin: 0 0 .25rem; }
+    .welcome-banner p { opacity: .85; margin: 0; font-size: .95rem; }
+    .progress-summary {
+      background: rgba(255,255,255,.12);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-top: 1.25rem;
+      display: flex; align-items: center; gap: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .progress-summary .stat { text-align: center; }
+    .progress-summary .stat .num { font-size: 1.75rem; font-weight: 700; line-height: 1; }
+    .progress-summary .stat .lbl { font-size: .72rem; opacity: .8; margin-top: .15rem; letter-spacing: .3px; text-transform: uppercase; }
+    .progress-summary .bar-wrap { flex: 1; min-width: 200px; }
+    .progress-summary .bar-wrap .bar-label { font-size: .8rem; opacity: .85; margin-bottom: .4rem; }
+    .main-progress { height: 10px; border-radius: 5px; background: rgba(255,255,255,.2); }
+    .main-progress .fill { height: 100%; border-radius: 5px; background: #4BC98A; }
+
+    /* ── Main Layout ── */
+    .portal-main { padding: 1.5rem 2rem; max-width: 1200px; margin: 0 auto; }
+    @media (max-width: 768px) { .portal-main { padding: 1rem; } }
+
+    /* ── Continue Card ── */
+    .continue-card {
+      background: var(--dt-white);
+      border-radius: 10px;
+      border-left: 5px solid var(--dt-blue);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--dt-shadow);
+      display: flex; align-items: center; gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .continue-card .icon-wrap {
+      width: 52px; height: 52px; border-radius: 10px;
+      background: var(--dt-blue-lt);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .continue-card .icon-wrap i { font-size: 1.5rem; color: var(--dt-blue); }
+    .continue-card h5 { margin: 0 0 .2rem; font-weight: 600; font-size: .95rem; color: var(--dt-navy); }
+    .continue-card p { margin: 0; font-size: .82rem; color: var(--dt-gray); }
+    .btn-continue {
+      background: var(--dt-blue);
+      color: #fff;
+      border: none;
+      padding: .6rem 1.25rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: .87rem;
+      text-decoration: none;
+      white-space: nowrap;
+      transition: background .15s;
+    }
+    .btn-continue:hover { background: var(--dt-navy); color: #fff; }
+
+    /* ── Section Cards ── */
+    .section-card {
+      background: var(--dt-white);
+      border-radius: 10px;
+      box-shadow: var(--dt-shadow);
+      padding: 1.1rem 1.25rem;
+      height: 100%;
+      transition: transform .15s, box-shadow .15s;
+      cursor: pointer; text-decoration: none; display: block; color: inherit;
+    }
+    .section-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(31,56,100,.14); }
+    .section-card .sec-num {
+      font-size: .7rem; font-weight: 700; letter-spacing: .5px;
+      text-transform: uppercase; opacity: .55; margin-bottom: .3rem;
+    }
+    .section-card h6 { font-weight: 600; font-size: .9rem; margin: 0 0 .75rem; color: var(--dt-navy); }
+    .sec-progress { height: 6px; border-radius: 3px; background: #E9ECEF; margin-bottom: .5rem; }
+    .sec-progress .fill { height: 100%; border-radius: 3px; }
+    .sec-meta { display: flex; justify-content: space-between; font-size: .75rem; color: var(--dt-gray); }
+
+    /* Section color fills */
+    .fill-s1 { background: var(--dt-blue); }
+    .fill-s2 { background: #1764AA; }
+    .fill-s3 { background: var(--dt-green); }
+    .fill-s4 { background: #2E7D32; }
+    .fill-s5 { background: var(--dt-orange); }
+    .fill-s6 { background: #8B1A00; }
+
+    /* ── Module List ── */
+    .module-row {
+      background: var(--dt-white);
+      border-radius: 8px;
+      padding: .8rem 1rem;
+      margin-bottom: .5rem;
+      box-shadow: 0 1px 4px rgba(31,56,100,.07);
+      display: flex; align-items: center; gap: .85rem;
+      text-decoration: none; color: inherit;
+      transition: background .12s;
+    }
+    .module-row:hover { background: var(--dt-blue-lt); }
+    .module-row .mod-num {
+      width: 38px; height: 38px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .82rem; flex-shrink: 0;
+      background: var(--dt-blue-lt); color: var(--dt-blue);
+    }
+    .module-row.completed .mod-num { background: var(--dt-green-lt); color: var(--dt-green); }
+    .module-row.in-progress .mod-num { background: #FFF3CD; color: var(--dt-gold); }
+    .module-row .mod-info { flex: 1; }
+    .module-row .mod-title { font-size: .87rem; font-weight: 500; margin: 0; color: var(--dt-navy); }
+    .module-row .mod-meta { font-size: .73rem; color: var(--dt-gray); margin: .1rem 0 0; }
+    .status-badge {
+      font-size: .7rem; font-weight: 600; padding: .2rem .55rem;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .badge-done    { background: var(--dt-green-lt); color: var(--dt-green); }
+    .badge-active  { background: #FFF3CD; color: var(--dt-gold); }
+    .badge-locked  { background: #F1F3F5; color: #ADB5BD; }
+    .badge-open    { background: var(--dt-blue-lt); color: var(--dt-blue); }
+
+    /* ── Sidebar ── */
+    .sidebar-card {
+      background: var(--dt-white);
+      border-radius: 10px;
+      box-shadow: var(--dt-shadow);
+      padding: 1.1rem 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .sidebar-card h6 {
+      font-size: .82rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .4px; color: var(--dt-navy); margin: 0 0 .85rem;
+      padding-bottom: .5rem; border-bottom: 2px solid var(--dt-blue-lt);
+    }
+    .quick-link {
+      display: flex; align-items: center; gap: .6rem;
+      padding: .45rem 0; text-decoration: none; color: var(--dt-navy);
+      font-size: .84rem; border-bottom: 1px solid #F1F3F5;
+      transition: color .12s;
+    }
+    .quick-link:last-child { border-bottom: none; }
+    .quick-link:hover { color: var(--dt-blue); }
+    .quick-link i { color: var(--dt-blue); font-size: .95rem; width: 18px; text-align: center; }
+
+    /* ── Section Heading ── */
+    .sec-heading {
+      font-size: .78rem; font-weight: 700; letter-spacing: .5px;
+      text-transform: uppercase; color: var(--dt-navy);
+      margin: 1.5rem 0 .75rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .sec-heading::after {
+      content: ''; flex: 1; height: 1px; background: var(--dt-border);
+    }
+
+    /* ── Checklist Status Widget ── */
+    .cl-widget-bar { height: 7px; border-radius: 4px; background: #E9ECEF; overflow: hidden; margin: .6rem 0 .5rem; }
+    .cl-widget-bar .fill { height: 100%; border-radius: 4px; background: var(--dt-green); transition: width .4s; }
+    .cl-widget-secs { display: flex; flex-direction: column; gap: .28rem; margin-bottom: .75rem; }
+    .cl-widget-sec-row { display: flex; align-items: center; gap: .5rem; font-size: .78rem; }
+    .cl-widget-dot {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+      background: #DEE2E6;
+    }
+    .cl-widget-dot.done    { background: var(--dt-green); }
+    .cl-widget-dot.partial { background: var(--dt-gold); }
+    .cl-widget-sec-name { flex: 1; color: var(--dt-navy); }
+    .cl-widget-sec-ct   { font-size: .72rem; color: var(--dt-gray); white-space: nowrap; }
+    .cl-widget-link {
+      display: flex; align-items: center; justify-content: center; gap: .4rem;
+      background: var(--dt-blue); color: #fff;
+      padding: .5rem 1rem; border-radius: 6px;
+      font-size: .84rem; font-weight: 600; text-decoration: none;
+      transition: background .15s;
+    }
+    .cl-widget-link:hover { background: var(--dt-navy); color: #fff; }
+    .cl-widget-complete {
+      display: flex; align-items: center; gap: .5rem;
+      background: var(--dt-green-lt); color: var(--dt-green);
+      border-radius: 7px; padding: .5rem .75rem;
+      font-size: .82rem; font-weight: 600; margin-bottom: .75rem;
+    }
+
+    /* ── Footer ── */
+    .portal-footer {
+      text-align: center; padding: 1.5rem; font-size: .75rem;
+      color: var(--dt-gray); border-top: 1px solid var(--dt-border);
+      margin-top: 2rem;
+    }
+
+    /* ── Manager View toggle ── */
+    .mgr-view { display: none; }
+    .mgr-view.active { display: block; }
+    .employee-view { display: block; }
+    .employee-view.hidden { display: none; }
+
+    /* Manager View badge button in nav brand */
+    .badge-mgr {
+      font-size: .65rem; font-weight: 600; padding: .25rem .65rem;
+      border-radius: 4px; letter-spacing: .3px; cursor: pointer;
+      border: 1.5px solid rgba(255,255,255,.5); color: rgba(255,255,255,.85);
+      background: transparent; font-family: inherit;
+      transition: background .15s, color .15s, border-color .15s;
+      display: flex; align-items: center; gap: .35rem;
+    }
+    .badge-mgr:hover, .badge-mgr.active {
+      background: rgba(255,255,255,.18); color: #fff; border-color: #fff;
+    }
+
+    /* ── Manager dark theme ── */
+    .mgr-view { background: #111827; min-height: 100vh; color: #e5e7eb; }
+
+    .mgr-top-bar {
+      background: #1e2535; padding: 1rem 2rem;
+      border-bottom: 1px solid #2d3748;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem;
+    }
+    .mgr-top-bar h2 { font-size: 1.15rem; font-weight: 700; color: #f1f5f9; margin: 0; }
+    .mgr-btn-outline {
+      background: transparent; border: 1.5px solid #4b5563; color: #d1d5db;
+      border-radius: 8px; padding: .45rem 1rem; font-size: .83rem;
+      font-weight: 500; cursor: pointer; font-family: inherit; transition: all .15s;
+    }
+    .mgr-btn-outline:hover { border-color: #9ca3af; color: #fff; }
+    .mgr-btn-solid {
+      background: #2E75B6; border: none; color: #fff;
+      border-radius: 8px; padding: .45rem 1rem; font-size: .83rem;
+      font-weight: 600; cursor: pointer; font-family: inherit; transition: background .15s;
+    }
+    .mgr-btn-solid:hover { background: #1F3864; }
+
+    .mgr-body { max-width: 1100px; margin: 0 auto; padding: 1.5rem 2rem 3rem; }
+
+    /* Stat cards */
+    .mgr-stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .mgr-stat-card {
+      background: #1e2535; border-radius: 12px; border: 1px solid #2d3748;
+      padding: 1.1rem 1.25rem;
+    }
+    .mgr-stat-card .sc-lbl { font-size: .75rem; color: #9ca3af; margin-bottom: .4rem; }
+    .mgr-stat-card .sc-num { font-size: 2rem; font-weight: 700; line-height: 1; }
+    .sc-teal   { color: #34d399; }
+    .sc-green  { color: #4ade80; }
+    .sc-orange { color: #fb923c; }
+    .sc-white  { color: #f1f5f9; }
+
+    /* Trainees table card */
+    .mgr-card {
+      background: #1e2535; border-radius: 12px; border: 1px solid #2d3748;
+      padding: 1.25rem 1.5rem; margin-bottom: 1rem;
+    }
+    .mgr-card-hdr {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1rem; font-size: .85rem;
+    }
+    .mgr-card-hdr .title { font-weight: 700; color: #f1f5f9; font-size: .95rem; }
+    .mgr-card-hdr .sub   { color: #6b7280; font-size: .8rem; }
+
+    .mgr-tbl { width: 100%; border-collapse: collapse; }
+    .mgr-tbl thead th {
+      text-align: left; font-size: .71rem; font-weight: 600; text-transform: uppercase;
+      letter-spacing: .5px; color: #6b7280; padding: .5rem .75rem;
+      border-bottom: 1px solid #2d3748;
+    }
+    .mgr-tbl tbody tr { border-bottom: 1px solid #1f2937; }
+    .mgr-tbl tbody tr:last-child { border-bottom: none; }
+    .mgr-tbl tbody tr:hover td { background: rgba(255,255,255,.03); }
+    .mgr-tbl td { padding: .85rem .75rem; vertical-align: middle; }
+
+    .mgr-avatar {
+      width: 36px; height: 36px; border-radius: 50%; font-weight: 700;
+      font-size: .8rem; color: #fff; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+    }
+    .av-tf { background: #2563eb; }
+    .av-tm { background: #7c3aed; }
+    .av-jl { background: #0891b2; }
+    .av-cr { background: #16a34a; }
+    .av-at { background: #dc2626; }
+    .av-ms { background: #6b7280; }
+
+    .mgr-emp-name { font-weight: 600; color: #f1f5f9; font-size: .88rem; }
+    .mgr-emp-sub  { font-size: .74rem; color: #9ca3af; margin-top: .1rem; }
+
+    .mgr-prog-wrap { display: flex; align-items: center; gap: .75rem; }
+    .mgr-prog-pct  { font-size: .82rem; font-weight: 600; color: #d1d5db; min-width: 34px; }
+    .mgr-prog-bar  { flex: 1; height: 6px; background: #374151; border-radius: 3px; overflow: hidden; }
+    .mgr-prog-fill { height: 100%; border-radius: 3px; }
+
+    .mgr-badge {
+      font-size: .72rem; font-weight: 700; padding: .25rem .65rem;
+      border-radius: 20px; white-space: nowrap;
+    }
+    .mb-track  { background: rgba(52,211,153,.15); color: #34d399; border: 1px solid rgba(52,211,153,.3); }
+    .mb-risk   { background: rgba(251,146,60,.15);  color: #fb923c; border: 1px solid rgba(251,146,60,.3); }
+    .mb-done   { background: rgba(96,165,250,.15);  color: #60a5fa; border: 1px solid rgba(96,165,250,.3); }
+    .mb-future { background: rgba(156,163,175,.1);  color: #9ca3af; border: 1px solid rgba(156,163,175,.2); }
+
+    .mgr-view-link { color: #60a5fa; font-size: .82rem; text-decoration: none; font-weight: 500; }
+    .mgr-view-link:hover { color: #93c5fd; text-decoration: underline; }
+
+    /* Onboard CTA */
+    .mgr-cta {
+      display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
+    }
+    .mgr-cta-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: #374151; color: #9ca3af; font-size: 1.4rem; font-weight: 300;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .mgr-cta-text { flex: 1; }
+    .mgr-cta-title { font-weight: 600; color: #f1f5f9; font-size: .9rem; margin-bottom: .2rem; }
+    .mgr-cta-sub   { font-size: .78rem; color: #9ca3af; }
+
+    @media(max-width:768px) {
+      .mgr-stats-grid { grid-template-columns: repeat(2,1fr); }
+      .mgr-body { padding: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════ TOP NAVIGATION ═══════════════════ -->
+<nav class="portal-nav">
+  <div style="display:flex;align-items:center;gap:.5rem;">
+    <a href="#" class="brand">
+      <i class="bi bi-mortarboard-fill" style="font-size:1.3rem;color:#fff;"></i>
+      DT-Trak Consulting
+      <span class="badge-portal">Training Portal</span>
+    </a>
+    <button class="badge-mgr" id="nav-mgr" onclick="toggleManagerView(event)">
+      <i class="bi bi-people-fill"></i> Manager View
+    </button>
+  </div>
+  <div class="nav-links d-none d-md-flex">
+    <a href="01-dashboard.html" class="active" id="nav-emp"><i class="bi bi-house-fill me-1"></i>Dashboard</a>
+    <a href="02-modules.html"><i class="bi bi-collection-play me-1"></i>Modules</a>
+    <a href="05-checklist.html"><i class="bi bi-check2-square me-1"></i>Checklist</a>
+    <a href="04-resources.html"><i class="bi bi-link-45deg me-1"></i>Resources</a>
+    <a href="#"><i class="bi bi-chat-dots me-1"></i>Help</a>
+  </div>
+  <div class="nav-user">
+    <span class="d-none d-sm-inline">Tanya Fabre</span>
+    <!-- POWER PAGES: replace "Tanya Fabre" with {{ user.fullname }} -->
+    <div class="avatar">TF</div>
+  </div>
+</nav>
+
+<!-- ═══════════════════ WELCOME BANNER ═══════════════════ -->
+<!-- POWER PAGES: Replace hardcoded name/numbers with Liquid variables -->
+<div class="welcome-banner">
+  <div style="max-width:1200px;margin:0 auto;">
+    <h1>Welcome back, Tanya! 👋</h1>
+    <!-- Liquid: Welcome back, {{ user.firstname }}! -->
+    <p>Medical Coder · RSBCIHI Facility · Started April 20, 2026</p>
+    <div class="progress-summary">
+      <div class="stat">
+        <div class="num">6</div>
+        <div class="lbl">Complete</div>
+      </div>
+      <div class="stat">
+        <div class="num">1</div>
+        <div class="lbl">In Progress</div>
+      </div>
+      <div class="stat">
+        <div class="num">18</div>
+        <div class="lbl">Remaining</div>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-label">Overall Progress — 24% Complete</div>
+        <div class="main-progress">
+          <div class="fill" style="width:24%"></div>
+          <!-- Liquid: style="width:{{ progress_pct }}%" -->
+        </div>
+      </div>
+      <a href="02-modules.html" class="btn-continue ms-auto">
+        View All Modules <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MAIN CONTENT ═══════════════════ -->
+<div class="portal-main">
+  <div class="row g-4">
+
+    <!-- ── Left Column: Main Content ── -->
+    <div class="col-lg-8">
+
+      <!-- Continue Card -->
+      <div class="continue-card">
+        <div class="icon-wrap">
+          <i class="bi bi-play-circle-fill"></i>
+        </div>
+        <div class="flex-grow-1">
+          <h5>Continue Where You Left Off</h5>
+          <p>MOD07 — Royal TS &amp; EHR Remote Access · Section 2: Systems &amp; Tools</p>
+        </div>
+        <a href="03-module-player.html" class="btn-continue">
+          <i class="bi bi-play-fill me-1"></i> Resume Module
+        </a>
+      </div>
+
+      <!-- Section Progress -->
+      <div class="sec-heading">Training Sections</div>
+      <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-4">
+          <a href="02-modules.html#s1" class="section-card">
+            <div class="sec-num">Section 1</div>
+            <h6>Onboarding &amp; Setup</h6>
+            <div class="sec-progress"><div class="fill fill-s1" style="width:100%"></div></div>
+            <div class="sec-meta"><span>6 / 6 modules</span><span style="color:var(--dt-green);font-weight:600;">✓ Complete</span></div>
+          </a>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+          <a href="02-modules.html#s2" class="section-card">
+            <div class="sec-num">Section 2</div>
+            <h6>Systems &amp; Tools</h6>
+            <div class="sec-progress"><div class="fill fill-s2" style="width:25%"></div></div>
+            <div class="sec-meta"><span>1 / 4 modules</span><span style="color:var(--dt-gold);">In Progress</span></div>
+          </a>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+          <a href="02-modules.html#s3" class="section-card">
+            <div class="sec-num">Section 3</div>
+            <h6>Coding Fundamentals</h6>
+            <div class="sec-progress"><div class="fill fill-s3" style="width:0%"></div></div>
+            <div class="sec-meta"><span>0 / 5 modules</span><span style="color:var(--dt-gray);">Not Started</span></div>
+          </a>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+          <a href="02-modules.html#s4" class="section-card">
+            <div class="sec-num">Section 4</div>
+            <h6>Specialty Coding</h6>
+            <div class="sec-progress"><div class="fill fill-s4" style="width:0%"></div></div>
+            <div class="sec-meta"><span>0 / 3 modules</span><span style="color:var(--dt-gray);">Not Started</span></div>
+          </a>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+          <a href="02-modules.html#s5" class="section-card">
+            <div class="sec-num">Section 5</div>
+            <h6>Daily Workflow</h6>
+            <div class="sec-progress"><div class="fill fill-s5" style="width:0%"></div></div>
+            <div class="sec-meta"><span>0 / 4 modules</span><span style="color:var(--dt-gray);">Not Started</span></div>
+          </a>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+          <a href="02-modules.html#s6" class="section-card">
+            <div class="sec-num">Section 6</div>
+            <h6>Advanced &amp; Productivity</h6>
+            <div class="sec-progress"><div class="fill fill-s6" style="width:0%"></div></div>
+            <div class="sec-meta"><span>0 / 3 modules</span><span style="color:var(--dt-gray);">Not Started</span></div>
+          </a>
+        </div>
+      </div>
+
+      <!-- Recent Activity / Up Next -->
+      <div class="sec-heading">Up Next</div>
+      <a href="03-module-player.html" class="module-row in-progress">
+        <div class="mod-num"><i class="bi bi-play-fill"></i></div>
+        <div class="mod-info">
+          <div class="mod-title">MOD07 — Royal TS &amp; EHR Remote Access</div>
+          <div class="mod-meta">Section 2 · ~26 min · SOP-07</div>
+        </div>
+        <span class="status-badge badge-active">In Progress</span>
+      </a>
+      <a href="03-module-player.html" class="module-row">
+        <div class="mod-num">08</div>
+        <div class="mod-info">
+          <div class="mod-title">MOD08 — Navigating NextGen — Patient &amp; Encounter Basics</div>
+          <div class="mod-meta">Section 2 · ~50 min · SOP-08</div>
+        </div>
+        <span class="status-badge badge-open">Available</span>
+      </a>
+      <a href="#" class="module-row" style="opacity:.6;pointer-events:none;">
+        <div class="mod-num" style="color:#ADB5BD;">09</div>
+        <div class="mod-info">
+          <div class="mod-title">MOD09 — Navigating eClinicalWorks (eCW)</div>
+          <div class="mod-meta">Section 2 · ~22 min · SOP-09</div>
+        </div>
+        <span class="status-badge badge-locked"><i class="bi bi-lock-fill me-1"></i>Locked</span>
+      </a>
+
+      <div class="text-center mt-3">
+        <a href="02-modules.html" style="color:var(--dt-blue);font-size:.87rem;font-weight:600;text-decoration:none;">
+          View all 25 modules <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+
+    <!-- ── Right Column: Sidebar ── -->
+    <div class="col-lg-4">
+
+      <!-- My Info -->
+      <div class="sidebar-card">
+        <h6><i class="bi bi-person-badge me-1"></i> My Training Info</h6>
+        <div style="font-size:.84rem;">
+          <div class="d-flex justify-content-between py-1 border-bottom">
+            <span style="color:var(--dt-gray);">Role</span>
+            <span style="font-weight:600;">Medical Coder</span>
+          </div>
+          <div class="d-flex justify-content-between py-1 border-bottom">
+            <span style="color:var(--dt-gray);">Facility</span>
+            <span style="font-weight:600;">RSBCIHI</span>
+          </div>
+          <div class="d-flex justify-content-between py-1 border-bottom">
+            <span style="color:var(--dt-gray);">EHR System</span>
+            <span style="font-weight:600;">NextGen</span>
+          </div>
+          <div class="d-flex justify-content-between py-1 border-bottom">
+            <span style="color:var(--dt-gray);">Start Date</span>
+            <span style="font-weight:600;">Apr 20, 2026</span>
+          </div>
+          <div class="d-flex justify-content-between py-1">
+            <span style="color:var(--dt-gray);">Trainer</span>
+            <span style="font-weight:600;">Christy Melstad</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Training Checklist Status Widget -->
+      <div class="sidebar-card" id="cl-widget-card">
+        <h6><i class="bi bi-check2-square me-1"></i> Training Checklist</h6>
+        <div id="cl-widget-body">
+          <!-- Rendered by JS -->
+          <div style="font-size:.8rem;color:var(--dt-gray);text-align:center;padding:.5rem 0;">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="sidebar-card">
+        <h6><i class="bi bi-lightning-charge me-1"></i> Quick Links</h6>
+        <a href="#" class="quick-link"><i class="bi bi-globe"></i> DT-Coder (dt-traker.trackvia.com)</a>
+        <a href="#" class="quick-link"><i class="bi bi-microsoft"></i> SharePoint — Coding Page</a>
+        <a href="#" class="quick-link"><i class="bi bi-clock"></i> TimeClock Plus</a>
+        <a href="#" class="quick-link"><i class="bi bi-book"></i> AAPC Member Portal</a>
+        <a href="#" class="quick-link"><i class="bi bi-file-earmark-text"></i> SOP Library</a>
+        <a href="#" class="quick-link"><i class="bi bi-question-circle"></i> DT Help Desk</a>
+      </div>
+
+      <!-- Need Help -->
+      <div class="sidebar-card" style="background:var(--dt-navy);color:#fff;">
+        <h6 style="color:#fff;border-color:rgba(255,255,255,.2);">
+          <i class="bi bi-chat-dots me-1"></i> Need Help?
+        </h6>
+        <p style="font-size:.83rem;opacity:.85;margin-bottom:.85rem;">
+          Ask the DT-Trak AI assistant any question about your training, coding rules, or systems. Escalates to a human trainer in Microsoft Teams if needed.
+        </p>
+        <a href="#" style="background:var(--dt-blue);color:#fff;padding:.6rem 1rem;border-radius:6px;font-size:.85rem;font-weight:600;text-decoration:none;display:block;text-align:center;">
+          <i class="bi bi-robot me-1"></i> Open AI Chat
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MANAGER VIEW ═══════════════════ -->
+<div class="mgr-view" id="mgr-view">
+
+  <!-- Top bar -->
+  <div class="mgr-top-bar">
+    <h2><i class="bi bi-people-fill me-2"></i>Trainee Overview — Medical Coder</h2>
+    <div style="display:flex;gap:.6rem;">
+      <button class="mgr-btn-outline"><i class="bi bi-download me-1"></i>Export report</button>
+      <button class="mgr-btn-solid"><i class="bi bi-person-plus me-1"></i>+ Add new employee</button>
+    </div>
+  </div>
+
+  <div class="mgr-body">
+
+    <!-- Stats -->
+    <div class="mgr-stats-grid">
+      <div class="mgr-stat-card">
+        <div class="sc-lbl">Active trainees</div>
+        <div class="sc-num sc-teal">4</div>
+      </div>
+      <div class="mgr-stat-card">
+        <div class="sc-lbl">Completed this month</div>
+        <div class="sc-num sc-green">2</div>
+      </div>
+      <div class="mgr-stat-card">
+        <div class="sc-lbl">Behind schedule</div>
+        <div class="sc-num sc-orange">1</div>
+      </div>
+      <div class="mgr-stat-card">
+        <div class="sc-lbl">Avg days to complete</div>
+        <div class="sc-num sc-white">16</div>
+      </div>
+    </div>
+
+    <!-- Active trainees table -->
+    <div class="mgr-card">
+      <div class="mgr-card-hdr">
+        <span class="title">Active trainees</span>
+        <span class="sub">Sorted by start date</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="mgr-tbl">
+          <thead>
+            <tr>
+              <th style="width:32%;">Employee</th>
+              <th style="width:30%;">Progress</th>
+              <th>Status</th>
+              <th>Report</th>
+            </tr>
+          </thead>
+          <tbody id="mgr-tbl-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Onboard CTA -->
+    <div class="mgr-card mgr-cta">
+      <div class="mgr-cta-icon">+</div>
+      <div class="mgr-cta-text">
+        <div class="mgr-cta-title">Onboard a new employee</div>
+        <div class="mgr-cta-sub">Enter their name, email, and role — they'll receive a personalized training link automatically</div>
+      </div>
+      <button class="mgr-btn-solid">Start onboarding</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer class="portal-footer">
+  DT-Trak Consulting, Inc. · Medical Coder Training Portal · HIPAA Compliant · All activity is logged
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ── MANAGER VIEW DATA ─────────────────────────────────────
+const EMPLOYEES = [
+  { name:"Tanya F.",  initials:"TF", avCls:"av-tf", role:"Medical Coder I",  facility:"RSBCIHI", startDate:"Apr 20, 2026", modDone:6,  modTotal:25, pct:24,  status:"track"  },
+  { name:"Taylor M.", initials:"TM", avCls:"av-tm", role:"Medical Coder I",  facility:"RSBCIHI", startDate:"Apr 21, 2026", modDone:18, modTotal:25, pct:72,  status:"track"  },
+  { name:"Jordan L.", initials:"JL", avCls:"av-jl", role:"Medical Coder I",  facility:"NVIH",    startDate:"Apr 28, 2026", modDone:7,  modTotal:25, pct:30,  status:"track"  },
+  { name:"Casey R.",  initials:"CR", avCls:"av-cr", role:"Medical Coder II", facility:"SSHWC",   startDate:"Apr 7, 2026",  modDone:25, modTotal:25, pct:92,  status:"done"   },
+  { name:"Alex T.",   initials:"AT", avCls:"av-at", role:"Medical Coder I",  facility:"NVIH",    startDate:"Apr 28, 2026", modDone:3,  modTotal:25, pct:14,  status:"risk"   },
+  { name:"Morgan S.", initials:"MS", avCls:"av-ms", role:"Medical Coder I",  facility:"RSBCIHI", startDate:"May 12, 2026", modDone:0,  modTotal:25, pct:0,   status:"future" },
+];
+
+const BADGE_CLS = { track:"mb-track", risk:"mb-risk", done:"mb-done", future:"mb-future" };
+const BADGE_LBL = { track:"On track",  risk:"Behind",  done:"On track", future:"Starting soon" };
+const PROG_CLR  = { track:"#2563eb",   risk:"#f97316", done:"#22c55e",  future:"#6b7280" };
+
+function renderMgrTable() {
+  const active = EMPLOYEES.filter(e => e.status !== 'future');
+  document.getElementById('mgr-tbl-body').innerHTML = active.map(e => `
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:.75rem;">
+          <div class="mgr-avatar ${e.avCls}">${e.initials}</div>
+          <div>
+            <div class="mgr-emp-name">${e.name}</div>
+            <div class="mgr-emp-sub">Started ${e.startDate} · Module ${e.modDone} of ${e.modTotal}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div class="mgr-prog-wrap">
+          <span class="mgr-prog-pct">${e.pct}%</span>
+          <div class="mgr-prog-bar"><div class="mgr-prog-fill" style="width:${e.pct}%;background:${PROG_CLR[e.status]};"></div></div>
+        </div>
+      </td>
+      <td><span class="mgr-badge ${BADGE_CLS[e.status]}">${BADGE_LBL[e.status]}</span></td>
+      <td><a href="#" class="mgr-view-link">View</a></td>
+    </tr>`).join('');
+}
+
+// ── TOGGLE ────────────────────────────────────────────────
+function toggleManagerView(e) {
+  e.preventDefault();
+  const mgrView  = document.getElementById('mgr-view');
+  const empView  = document.querySelector('.employee-view');
+  const navMgr   = document.getElementById('nav-mgr');
+  const navEmp   = document.getElementById('nav-emp');
+  const isActive = mgrView.classList.contains('active');
+  if (isActive) {
+    mgrView.classList.remove('active');
+    empView.classList.remove('hidden');
+    navMgr.classList.remove('active');
+    navEmp.classList.add('active');
+  } else {
+    mgrView.classList.add('active');
+    empView.classList.add('hidden');
+    navMgr.classList.add('active');
+    navEmp.classList.remove('active');
+    renderMgrTable();
+  }
+}
+
+// ── CHECKLIST STATUS WIDGET ──────────────────────────────────
+(function renderChecklistWidget() {
+  const CL_SECTIONS = [
+    { id:'pre-start',   label:'Prior to Start Date',    total:11 },
+    { id:'dt-training', label:'Initial DT Training',    total:21 },
+    { id:'timeclock',   label:'Time Clock & Payroll',   total:16 },
+    { id:'access',      label:'Access & Verify',        total:11 },
+    { id:'sharepoint',  label:'SharePoint Navigation',  total:12 },
+    { id:'coding',      label:"Let's Start Coding",     total:10 },
+    { id:'signatures',  label:'Signatures & Evaluation',total:14 },
+  ];
+
+  const empName = localStorage.getItem('dt_portal_user_v1') || 'New Employee';
+  let data = {};
+  try { data = JSON.parse(localStorage.getItem('dt_checklist_portal_v1_' + empName) || '{}'); } catch(e) {}
+
+  const totalItems   = CL_SECTIONS.reduce((a,s) => a + s.total, 0);
+  const doneItems    = Object.values(data).filter(Boolean).length;
+  const pct          = totalItems ? Math.round((doneItems / totalItems) * 100) : 0;
+  const secsDone     = CL_SECTIONS.filter(s => {
+    // Count how many of this section's items are checked
+    // We only have totals here, so approximate by scanning key prefixes
+    const prefix = s.id === 'pre-start' ? 'ps' : s.id === 'dt-training' ? 'dt' : s.id === 'timeclock' ? 'tc' : s.id === 'access' ? 'ac' : s.id === 'sharepoint' ? 'sp' : s.id === 'coding' ? 'cd' : 'sg';
+    const checked = Object.entries(data).filter(([k,v]) => v && k.startsWith(prefix)).length;
+    return checked === s.total;
+  }).length;
+
+  const isComplete = doneItems === totalItems && totalItems > 0;
+
+  const sectionRows = CL_SECTIONS.map(s => {
+    const prefix = s.id === 'pre-start' ? 'ps' : s.id === 'dt-training' ? 'dt' : s.id === 'timeclock' ? 'tc' : s.id === 'access' ? 'ac' : s.id === 'sharepoint' ? 'sp' : s.id === 'coding' ? 'cd' : 'sg';
+    const checked = Object.entries(data).filter(([k,v]) => v && k.startsWith(prefix)).length;
+    const isDone    = checked === s.total;
+    const isPartial = checked > 0 && !isDone;
+    const dotCls = isDone ? 'done' : isPartial ? 'partial' : '';
+    return `<div class="cl-widget-sec-row">
+      <div class="cl-widget-dot ${dotCls}"></div>
+      <span class="cl-widget-sec-name">${s.label}</span>
+      <span class="cl-widget-sec-ct">${checked}/${s.total}</span>
+    </div>`;
+  }).join('');
+
+  const html = `
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.1rem;">
+      <span style="font-size:1.5rem;font-weight:700;color:var(--dt-navy);">${secsDone}<span style="font-size:.9rem;color:var(--dt-gray);font-weight:500;">/7</span></span>
+      <span style="font-size:.78rem;color:var(--dt-gray);">sections complete</span>
+    </div>
+    <div class="cl-widget-bar"><div class="fill" style="width:${pct}%"></div></div>
+    <div style="font-size:.75rem;color:var(--dt-gray);text-align:right;margin-bottom:.75rem;">${doneItems} of ${totalItems} items &mdash; ${pct}%</div>
+    ${isComplete ? `<div class="cl-widget-complete"><i class="bi bi-patch-check-fill"></i> All items complete!</div>` : ''}
+    <div class="cl-widget-secs">${sectionRows}</div>
+    <a href="05-checklist.html" class="cl-widget-link">
+      <i class="bi bi-check2-square"></i> Open Checklist
+    </a>`;
+
+  const body = document.getElementById('cl-widget-body');
+  if (body) body.innerHTML = html;
+})();
+
+// ── TOGGLE ────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  const banner = document.querySelector('.welcome-banner');
+  const main   = document.querySelector('.portal-main');
+  const footer = document.querySelector('.portal-footer');
+  const wrapper = document.createElement('div');
+  wrapper.className = 'employee-view';
+  banner.parentNode.insertBefore(wrapper, banner);
+  wrapper.appendChild(banner);
+  wrapper.appendChild(main);
+  wrapper.appendChild(footer);
+});
+</script>
+</body>
+</html>

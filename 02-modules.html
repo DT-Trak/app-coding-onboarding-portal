@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<!--
+  DT-TRAK MEDICAL CODER TRAINING PORTAL
+  Page: Training Modules (All 25 modules)
+  ─────────────────────────────────────────────────────────────────────────
+  POWER PAGES INSTRUCTIONS:
+  1. Pages → Add Page → "Training Modules"
+  2. Paste the <body> content into a Custom HTML component
+  3. The module cards are dynamically generated from Dataverse in the live portal.
+     In Power Pages, use a "List" component connected to the Training_Module table
+     instead of the hardcoded HTML cards below.
+  4. The hardcoded cards here serve as the visual template for the List's
+     Item Template (the HTML that renders each row from Dataverse).
+  ─────────────────────────────────────────────────────────────────────────
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DT-Trak Training Portal — All Modules</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --dt-navy:#1F3864; --dt-blue:#2E75B6; --dt-blue-lt:#D6E4F0;
+      --dt-green:#375623; --dt-green-lt:#E2EFDA;
+      --dt-orange:#C55A11; --dt-gold:#BF8F00;
+      --dt-bg:#F0F4FA; --dt-white:#FFFFFF; --dt-gray:#6C757D; --dt-border:#DEE2E6;
+    }
+    * { font-family:'Inter',sans-serif; }
+    body { background:var(--dt-bg); margin:0; }
+    .portal-nav {
+      background:var(--dt-navy); padding:0 1.5rem; height:60px;
+      display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100; box-shadow:0 2px 6px rgba(0,0,0,.25);
+    }
+    .portal-nav .brand { color:#fff; font-weight:700; font-size:1.05rem; text-decoration:none; display:flex; align-items:center; gap:.6rem; }
+    .badge-portal { background:var(--dt-blue); font-size:.65rem; font-weight:600; padding:.2rem .5rem; border-radius:3px; }
+    .nav-links { display:flex; gap:.2rem; }
+    .nav-links a { color:rgba(255,255,255,.78); text-decoration:none; padding:.4rem .75rem; border-radius:4px; font-size:.85rem; font-weight:500; transition:background .15s; }
+    .nav-links a:hover,.nav-links a.active { background:rgba(255,255,255,.12); color:#fff; }
+    .nav-user { display:flex; align-items:center; gap:.75rem; color:rgba(255,255,255,.85); font-size:.85rem; }
+    .nav-user .avatar { width:32px; height:32px; background:var(--dt-blue); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; color:#fff; }
+
+    /* ── Page Header ── */
+    .page-header { background:var(--dt-navy); color:#fff; padding:1.5rem 2rem; }
+    .page-header h1 { font-size:1.3rem; font-weight:700; margin:0 0 .2rem; }
+    .page-header p { margin:0; opacity:.8; font-size:.88rem; }
+    .progress-bar-wrap { margin-top:1rem; }
+    .prog-bar { height:8px; border-radius:4px; background:rgba(255,255,255,.2); }
+    .prog-bar .fill { height:100%; border-radius:4px; background:#4BC98A; }
+    .prog-label { font-size:.78rem; opacity:.8; margin-bottom:.35rem; }
+
+    /* ── Filters ── */
+    .filter-bar { background:#fff; border-bottom:1px solid var(--dt-border); padding:.75rem 2rem; display:flex; gap:.5rem; flex-wrap:wrap; align-items:center; }
+    .filter-btn { border:1px solid var(--dt-border); background:#fff; color:var(--dt-gray); padding:.3rem .85rem; border-radius:20px; font-size:.8rem; font-weight:500; cursor:pointer; transition:all .15s; }
+    .filter-btn:hover,.filter-btn.active { background:var(--dt-blue); border-color:var(--dt-blue); color:#fff; }
+    .filter-label { font-size:.78rem; font-weight:600; color:var(--dt-navy); text-transform:uppercase; letter-spacing:.3px; margin-right:.25rem; }
+
+    /* ── Content ── */
+    .modules-main { padding:1.5rem 2rem; max-width:1100px; margin:0 auto; }
+    @media(max-width:768px){.modules-main{padding:1rem;}}
+
+    /* ── Section Group ── */
+    .section-group { margin-bottom:2rem; }
+    .section-label {
+      display:flex; align-items:center; gap:.75rem; margin-bottom:.85rem;
+      padding:0 0 .6rem; border-bottom:2px solid var(--dt-border);
+    }
+    .section-badge {
+      width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+      font-weight:700; font-size:.85rem; color:#fff; flex-shrink:0;
+    }
+    .s1-color{background:#2E75B6;} .s2-color{background:#1764AA;} .s3-color{background:#375623;}
+    .s4-color{background:#2E7D32;} .s5-color{background:#C55A11;} .s6-color{background:#8B1A00;}
+    .section-label .sec-info h5 { font-size:1rem; font-weight:700; margin:0; color:var(--dt-navy); }
+    .section-label .sec-info p { font-size:.78rem; color:var(--dt-gray); margin:0; }
+    .sec-progress-pill {
+      margin-left:auto; font-size:.75rem; font-weight:600; padding:.25rem .7rem;
+      border-radius:20px;
+    }
+
+    /* ── Module Card ── */
+    .module-card {
+      background:var(--dt-white); border-radius:10px;
+      box-shadow:0 1px 5px rgba(31,56,100,.09);
+      margin-bottom:.6rem; overflow:hidden;
+      display:flex; align-items:stretch;
+      transition:box-shadow .15s, transform .12s;
+      text-decoration:none; color:inherit;
+    }
+    .module-card:hover { box-shadow:0 4px 16px rgba(31,56,100,.14); transform:translateX(2px); }
+    .module-card.completed { opacity:.85; }
+    .card-accent { width:5px; flex-shrink:0; }
+    .card-body-wrap { display:flex; align-items:center; gap:1rem; padding:.85rem 1.1rem; flex:1; flex-wrap:wrap; }
+    .mod-number {
+      width:44px; height:44px; border-radius:9px; display:flex; align-items:center;
+      justify-content:center; font-weight:700; font-size:.85rem; flex-shrink:0;
+    }
+    .mod-content { flex:1; min-width:0; }
+    .mod-title { font-size:.92rem; font-weight:600; color:var(--dt-navy); margin:0 0 .25rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .mod-desc { font-size:.77rem; color:var(--dt-gray); margin:0 0 .3rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:1; -webkit-box-orient:vertical; }
+    .mod-tags { display:flex; gap:.4rem; flex-wrap:wrap; }
+    .mod-tag { font-size:.68rem; padding:.15rem .45rem; border-radius:3px; background:#F1F3F5; color:var(--dt-gray); font-weight:500; }
+    .mod-actions { display:flex; align-items:center; gap:.75rem; flex-shrink:0; }
+    .status-badge { font-size:.72rem; font-weight:600; padding:.22rem .6rem; border-radius:20px; white-space:nowrap; }
+    .badge-done    { background:var(--dt-green-lt); color:var(--dt-green); }
+    .badge-active  { background:#FFF3CD; color:var(--dt-gold); }
+    .badge-open    { background:var(--dt-blue-lt); color:var(--dt-blue); }
+    .badge-locked  { background:#F1F3F5; color:#ADB5BD; }
+    .btn-start { background:var(--dt-blue); color:#fff; border:none; padding:.4rem .9rem; border-radius:6px; font-size:.8rem; font-weight:600; text-decoration:none; white-space:nowrap; }
+    .btn-review { background:var(--dt-green-lt); color:var(--dt-green); border:none; padding:.4rem .9rem; border-radius:6px; font-size:.8rem; font-weight:600; text-decoration:none; white-space:nowrap; }
+    .check-icon { color:var(--dt-green); font-size:1.2rem; }
+
+    /* Section header progress pills */
+    .pill-done    { background:var(--dt-green-lt); color:var(--dt-green); }
+    .pill-partial { background:#FFF3CD; color:var(--dt-gold); }
+    .pill-none    { background:#F1F3F5; color:var(--dt-gray); }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="portal-nav">
+  <a href="01-dashboard.html" class="brand">
+    <i class="bi bi-mortarboard-fill" style="font-size:1.3rem;color:#fff;"></i>
+    DT-Trak Consulting <span class="badge-portal">Training Portal</span>
+  </a>
+  <div class="nav-links d-none d-md-flex">
+    <a href="01-dashboard.html"><i class="bi bi-house-fill me-1"></i>Dashboard</a>
+    <a href="02-modules.html" class="active"><i class="bi bi-collection-play me-1"></i>Modules</a>
+    <a href="05-checklist.html"><i class="bi bi-check2-square me-1"></i>Checklist</a>
+    <a href="04-resources.html"><i class="bi bi-link-45deg me-1"></i>Resources</a>
+    <a href="#"><i class="bi bi-chat-dots me-1"></i>Help</a>
+  </div>
+  <div class="nav-user">
+    <span class="d-none d-sm-inline">Tanya Fabre</span>
+    <div class="avatar">TF</div>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h1><i class="bi bi-collection-play me-2"></i>Training Modules</h1>
+    <p>Complete all 25 modules to finish your Medical Coder onboarding. Modules unlock in order.</p>
+    <div class="progress-bar-wrap">
+      <div class="prog-label">6 of 25 complete (24%)</div>
+      <div class="prog-bar"><div class="fill" style="width:24%"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <span class="filter-label">Show:</span>
+  <button class="filter-btn active">All</button>
+  <button class="filter-btn">Not Started</button>
+  <button class="filter-btn">In Progress</button>
+  <button class="filter-btn">Completed</button>
+  <button class="filter-btn ms-2">Section 1</button>
+  <button class="filter-btn">Section 2</button>
+  <button class="filter-btn">Section 3</button>
+  <button class="filter-btn">Section 4</button>
+  <button class="filter-btn">Section 5</button>
+  <button class="filter-btn">Section 6</button>
+</div>
+
+<!-- MODULES -->
+<div class="modules-main">
+
+  <!-- ══ SECTION 1 ══ -->
+  <div class="section-group" id="s1">
+    <div class="section-label">
+      <div class="section-badge s1-color">1</div>
+      <div class="sec-info">
+        <h5>Onboarding &amp; Setup</h5>
+        <p>6 modules · DT Network, email, Teams, TimeClock, LastPass, Chrome, payroll, AAPC</p>
+      </div>
+      <span class="sec-progress-pill pill-done">6 / 6 Complete ✓</span>
+    </div>
+    <!-- Modules 01-06 -->
+    <a href="03-module-player.html" class="module-card completed">
+      <div class="card-accent s1-color"></div>
+      <div class="card-body-wrap">
+        <div class="mod-number" style="background:#D6E4F0;color:#2E75B6;">01</div>
+        <div class="mod-content">
+          <div class="mod-title">Welcome to DT-Trak: Your First Day Overview</div>
+          <div class="mod-desc">Introduction to DT-Trak, training structure, key contacts, and facility assignments.</div>
+          <div class="mod-tags"><span class="mod-tag"><i class="bi bi-clock me-1"></i>10 min</span><span class="mod-tag">SOP-01</span></div>
+        </div>
+        <div class="mod-actions">
+          <span class="status-badge badge-done"><i class="bi bi-check-circle-fill me-1"></i>Complete</span>
+          <a href="03-module-player.html" class="btn-review">Review</a>
+        </div>
+      </div>
+    </a>
+    <a href="03-module-player.html" class="module-card completed">
+      <div class="card-accent s1-color"></div>
+      <div class="card-body-wrap">
+        <div class="mod-number" style="background:#D6E4F0;color:#2E75B6;">02</div>
+        <div class="mod-content">
+          <div class="mod-title">Email Setup &amp; Microsoft Teams</div>
+          <div class="mod-desc">Outlook configuration, HIPAA email rules, Teams channels, and professional communication standards.</div>
+          <div class="mod-tags"><span class="mod-tag"><i class="bi bi-clock me-1"></i>45 min</span><span class="mod-tag">SOP-02</span></div>
+        </div>
+        <div class="mod-actions">
+          <span class="status-badge badge-done"><i class="bi bi-check-circle-fill me-1"></i>Complete</span>
+          <a href="03-module-player.html" class="btn-review">Review</a>
+        </div>
+      </div>
+    </a>
+    <a href="03-module-player.html" class="module-card completed">
+      <div class="card-accent s1-color"></div>
+      <div class="card-body-wrap">
+        <div class="mod-number" style="background:#D6E4F0;color:#2E75B6;">03</div>
+        <div class="mod-content">
+          <div class="mod-title">TimeClock Plus: Clocking In, Cost Codes &amp; Time Off</div>
+          <div class="mod-desc">Full TimeClock Plus walkthrough including cost codes, daily notes, and time off requests.</div>
+          <div class="mod-tags"><span class="mod-tag"><i class="bi bi-clock me-1"></i>24 min</span><span class="mod-tag">SOP-03</span></div>
+        </div>
+        <div class="mod-actions">
+          <span class="status-badge badge-done"><i class="bi bi-check-circle-fill me-1"></i>Complete</span>
+          <a href="03-module-player.html" class="btn-review">Review</a>
+        </div>
+      </div>
+    </a>
+    <a href="03-module-player.html" class="module-card completed">
+      <div class="card-accent s1-color"></div>
+      <div class="card-body-wrap">
+        <div class="mod-number" style="background:#D6E4F0;color:#2E75B6;">04</div>
+        <div class="mod-content">
+          <div class="mod-title">Chrome, LastPass &amp; Password Setup</div>
+          <div class="mod-desc">Configure Chrome, install LastPass, sync favorites, set PDFs to open in Adobe, Royal TS initial access.</div>
+          <div class="mod-tags"><span class="mod-tag"><i class="bi bi-clock me-1"></i>34 min</span><span class="mod-tag">SOP-04</span></div>
+        </div>
+        <div class="mod-actions">
+          <span class="status-badge badge-done"><i class="bi bi-check-circle-fill me-1"></i>Complete</span>
+          <a href="03-module-player.html" class="btn-review">Review</a>
+        </div>
+      </div>
+    </a>
+    <a href="03-module-player.html" class="module-card completed">
+      <div class="card-accent s1-color"></div>
+      <div class="card-body-wrap">
+        <div class="mod-number" style="background:#D6E4F0;color:#2E75B6;">05</div>
+        <div class="mod-content">
+          <div class="mod-title">SharePoint Navigation &amp; Key Resources</div>
+          <div class="mod-desc">Navigate DT-Trak's SharePoint — Coding Page, Master DT Guidelines, Protocol Notes, Education, and Employee folder.</div>
+          <div class="mod-tags"><span class="mod-tag"><i class="bi bi-clock me-1"></i>60 min</span><span class="mod-tag">SOP-05</span></div>
+        </div>
+        <div class="mod-actions">
+          <span class="status-badge badge-done"><i class="bi bi-check-circle-fill me-1"></i>Complete</span>
+          <a href="03-module-player.html" class="btn-review">Review</a>
+        </div>
+      </div>
+    </a>
+    <a href="03-module-player.html" class="module-card completed">
+      <div class="card-accent s1-color"></div>
+      <div class="card-body-wrap">
+        <div class="mod-number" style="background:#D6E4F0;color:#2E75B6;">06</div>
+        <div class="mod-content">
+          <div class="mod-title">Access/Verify, AAPC Membership &amp; DT Help Desk</div>
+          <div class="mod-desc">Bi-monthly Access/Verify process, A/V error forms, AAPC membership and CEU submission, Help Desk ticketing.</div>
+          <div class="mod-tags"><span class="mod-tag"><i class="bi bi-clock me-1"></i>40 min</span><span class="mod-tag">SOP-06</span></div>
+        </div>
+        <div class="mod-actions">
+          <span class="status-badge badge-done"><i class="bi bi-check-circle-fill me-1"></i>Complete</span>
+          <a href="03-module-player.html" class="btn-review">Review</a>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- ══ SECTION 2 ══ -->
+  <div class="section-group" id="s2">
+    <div class="section-label">
+      <div class="section-badge s2-color">2</div>
+      <div class="sec-info">
+        <h5>Systems &amp; Tools</h5>
+        <p>4 modules · Royal TS, NextGen, eClinicalWorks, DT-Coder</p>
+      </div>
+      <span class="sec-progress-pill pill-partial">1 / 4 In Progress</span>
+    </div>
+    <a href="03-module-player.html" class="module-card in-progress">
+      <div class="card-accent s2-color"></div>
+      <div class="card-body-wrap">
+        <div class="mod-number" style="background:#FFF3CD;color:#BF8F00;"><i class="bi bi-play-fill"></i></div>
+        <div class="mod-content">
+          <div class="mod-title">MOD07 — Royal TS &amp; EHR Remote Access</div>
+          <div class="mod-desc">Use Royal TS to remotely access EHR systems at client facilities. D1 domain login, finding EHR icon, proper logoff.</div>
+          <div class="mod-tags"><span class="mod-tag"><i class="bi bi-clock me-1"></i>26 min</span><span class="mod-tag">SOP-07</span><span class="mod-tag" style="background:#FFF3CD;color:#BF8F00;">In Progress</span></div>
+        </div>
+        <div class="mod-actions">
+          <span class="status-badge badge-active">In Progress</span>
+          <a href="03-module-player.html" class="btn-start">Resume</a>
+        </div>
+      </div>
+    </a>
+    <a href="03-module-player.html" class="module-card">
+      <div class="card-accent s2-color"></div>
+      <div class="card-body-wrap">
+        <div class="mod-number" style="background:#D6E4F0;color:#1764AA;">08</div>
+        <div class="mod-content">
+          <div class="mod-title">MOD08 — Navigating NextGen — Patient &amp; Encounter Basics</div>
+          <div class="mod-desc">Patient Hub navigation, lab results, vitals, medications, visit notes, new vs established patient, encounter view.</div>
+          <div class="mod-tags"><span class="mod-tag"><i class="bi bi-clock me-1"></i>50 min</span><span class="mod-tag">SOP-08</span></div>
+        </div>
+        <div class="mod-actions">
+          <span class="status-badge badge-open">Available</span>
+          <a href="03-module-player.html" class="btn-start">Start</a>
+        </div>
+      </div>
+    </a>
+    <a href="#" class="module-card" style="opacity:.55;pointer-events:none;">
+      <div class="card-accent" style="background:#ADB5BD;width:5px;flex-shrink:0;"></div>
+      <div class="card-body-wrap">
+        <div class="mod-number" style="background:#F1F3F5;color:#ADB5BD;">09</div>
+        <div class="mod-content">
+          <div class="mod-title">MOD09 — Navigating eClinicalWorks (eCW) — Coding Workflow</div>
+          <div class="mod-desc">eCW coding interface for NVIH. Work queue, patient charts, CPT and ICD-10 entry, ready for billing.</div>
+          <div class="mod-tags"><span class="mod-tag"><i class="bi bi-clock me-1"></i>22 min</span><span class="mod-tag">SOP-09</span></div>
+        </div>
+        <div class="mod-actions">
+          <span class="status-badge badge-locked"><i class="bi bi-lock-fill me-1"></i>Locked</span>
+        </div>
+      </div>
+    </a>
+    <a href="#" class="module-card" style="opacity:.55;pointer-events:none;">
+      <div class="card-accent" style="background:#ADB5BD;width:5px;flex-shrink:0;"></div>
+      <div class="card-body-wrap">
+        <div class="mod-number" style="background:#F1F3F5;color:#ADB5BD;">10</div>
+        <div class="mod-content">
+          <div class="mod-title">MOD10 — Introduction to DT-Coder — Dashboard &amp; Daily Protocol</div>
+          <div class="mod-desc">DT-Coder dashboard, the 15-minute morning protocol, audits, notifications, stats, and daily required documents.</div>
+          <div class="mod-tags"><span class="mod-tag"><i class="bi bi-clock me-1"></i>36 min</span><span class="mod-tag">SOP-10</span></div>
+        </div>
+        <div class="mod-actions">
+          <span class="status-badge badge-locked"><i class="bi bi-lock-fill me-1"></i>Locked</span>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- ══ SECTIONS 3-6: Locked placeholder ══ -->
+  <div class="section-group" id="s3">
+    <div class="section-label">
+      <div class="section-badge s3-color">3</div>
+      <div class="sec-info"><h5>Coding Fundamentals</h5><p>5 modules · ICD-10, E/M coding, preventive medicine, vaccines, modifiers</p></div>
+      <span class="sec-progress-pill pill-none">0 / 5 · Not Started</span>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:1.5rem;text-align:center;color:var(--dt-gray);font-size:.88rem;box-shadow:0 1px 4px rgba(31,56,100,.07);">
+      <i class="bi bi-lock-fill me-2" style="font-size:1.1rem;"></i>Complete Section 2 to unlock Coding Fundamentals
+    </div>
+  </div>
+  <div class="section-group" id="s4">
+    <div class="section-label">
+      <div class="section-badge s4-color">4</div>
+      <div class="sec-info"><h5>Specialty Coding</h5><p>3 modules · OB/prenatal, common diagnoses, lab &amp; diagnostic coding</p></div>
+      <span class="sec-progress-pill pill-none">0 / 3 · Not Started</span>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:1.5rem;text-align:center;color:var(--dt-gray);font-size:.88rem;box-shadow:0 1px 4px rgba(31,56,100,.07);">
+      <i class="bi bi-lock-fill me-2" style="font-size:1.1rem;"></i>Complete Section 3 to unlock Specialty Coding
+    </div>
+  </div>
+  <div class="section-group" id="s5">
+    <div class="section-label">
+      <div class="section-badge s5-color">5</div>
+      <div class="sec-info"><h5>Daily Workflow</h5><p>4 modules · Work queue, QA audits, notifications, daily protocol</p></div>
+      <span class="sec-progress-pill pill-none">0 / 4 · Not Started</span>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:1.5rem;text-align:center;color:var(--dt-gray);font-size:.88rem;box-shadow:0 1px 4px rgba(31,56,100,.07);">
+      <i class="bi bi-lock-fill me-2" style="font-size:1.1rem;"></i>Unlocks after Section 4
+    </div>
+  </div>
+  <div class="section-group" id="s6">
+    <div class="section-label">
+      <div class="section-badge s6-color">6</div>
+      <div class="sec-info"><h5>Advanced &amp; Productivity</h5><p>3 modules · Diagnosis sequencing, FQHC protocols, productivity &amp; stats</p></div>
+      <span class="sec-progress-pill pill-none">0 / 3 · Not Started</span>
+    </div>
+    <div style="background:#fff;border-radius:10px;padding:1.5rem;text-align:center;color:var(--dt-gray);font-size:.88rem;box-shadow:0 1px 4px rgba(31,56,100,.07);">
+      <i class="bi bi-lock-fill me-2" style="font-size:1.1rem;"></i>Unlocks after Section 5
+    </div>
+  </div>
+
+</div>
+
+<footer style="text-align:center;padding:1.5rem;font-size:.75rem;color:#6C757D;border-top:1px solid #DEE2E6;margin-top:1rem;">
+  DT-Trak Consulting, Inc. · Medical Coder Training Portal · HIPAA Compliant
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>

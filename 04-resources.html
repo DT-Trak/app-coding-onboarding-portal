@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<!--
+  DT-TRAK MEDICAL CODER TRAINING PORTAL
+  Page: Resources
+  ─────────────────────────────────────────────────────────────────────────
+  POWER PAGES INSTRUCTIONS:
+  1. Pages → Add Page → "Resources"
+  2. Paste <body> content into a Custom HTML component
+  3. Update all href="#" links with actual URLs once systems are configured
+  ─────────────────────────────────────────────────────────────────────────
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DT-Trak Training Portal — Resources</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --dt-navy:#1F3864; --dt-blue:#2E75B6; --dt-blue-lt:#D6E4F0;
+      --dt-green:#375623; --dt-green-lt:#E2EFDA;
+      --dt-bg:#F0F4FA; --dt-white:#FFFFFF; --dt-gray:#6C757D; --dt-border:#DEE2E6;
+    }
+    * { font-family:'Inter',sans-serif; }
+    body { background:var(--dt-bg); margin:0; }
+    .portal-nav { background:var(--dt-navy); padding:0 1.5rem; height:60px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 2px 6px rgba(0,0,0,.25); }
+    .portal-nav .brand { color:#fff; font-weight:700; font-size:1.05rem; text-decoration:none; display:flex; align-items:center; gap:.6rem; }
+    .badge-portal { background:var(--dt-blue); font-size:.65rem; font-weight:600; padding:.2rem .5rem; border-radius:3px; }
+    .nav-links { display:flex; gap:.2rem; }
+    .nav-links a { color:rgba(255,255,255,.78); text-decoration:none; padding:.4rem .75rem; border-radius:4px; font-size:.85rem; font-weight:500; }
+    .nav-links a:hover,.nav-links a.active { background:rgba(255,255,255,.12); color:#fff; }
+    .nav-user { display:flex; align-items:center; gap:.75rem; color:rgba(255,255,255,.85); font-size:.85rem; }
+    .nav-user .avatar { width:32px; height:32px; background:var(--dt-blue); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.85rem; color:#fff; }
+
+    .page-header { background:var(--dt-navy); color:#fff; padding:1.5rem 2rem; }
+    .page-header h1 { font-size:1.3rem; font-weight:700; margin:0 0 .2rem; }
+    .page-header p { margin:0; opacity:.8; font-size:.88rem; }
+
+    .resources-main { padding:1.5rem 2rem; max-width:1100px; margin:0 auto; }
+    @media(max-width:768px){.resources-main{padding:1rem;}}
+
+    .resource-section { margin-bottom:2rem; }
+    .resource-section h4 { font-size:.85rem; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--dt-navy); margin:0 0 .85rem; display:flex; align-items:center; gap:.5rem; }
+    .resource-section h4::after { content:''; flex:1; height:1px; background:var(--dt-border); }
+
+    .resource-card {
+      background:var(--dt-white); border-radius:10px; box-shadow:0 1px 5px rgba(31,56,100,.09);
+      padding:1rem 1.25rem; display:flex; align-items:center; gap:1rem;
+      text-decoration:none; color:inherit; transition:box-shadow .15s, transform .12s;
+      margin-bottom:.6rem;
+    }
+    .resource-card:hover { box-shadow:0 4px 14px rgba(31,56,100,.14); transform:translateY(-1px); }
+    .resource-icon {
+      width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+      font-size:1.3rem; flex-shrink:0;
+    }
+    .resource-card .res-info h6 { font-size:.92rem; font-weight:600; color:var(--dt-navy); margin:0 0 .15rem; }
+    .resource-card .res-info p { font-size:.78rem; color:var(--dt-gray); margin:0; }
+    .res-badge { font-size:.7rem; font-weight:600; padding:.18rem .5rem; border-radius:3px; white-space:nowrap; margin-left:auto; }
+    .badge-required { background:#FFE0E0; color:#C00000; }
+    .badge-daily    { background:#FFF3CD; color:#BF8F00; }
+    .badge-ref      { background:var(--dt-blue-lt); color:var(--dt-blue); }
+    .badge-ext      { background:var(--dt-green-lt); color:var(--dt-green); }
+
+    /* SOP Library */
+    .sop-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:.6rem; }
+    .sop-item {
+      background:var(--dt-white); border-radius:8px; padding:.75rem 1rem;
+      box-shadow:0 1px 4px rgba(31,56,100,.08); display:flex; align-items:center;
+      gap:.65rem; text-decoration:none; color:inherit; transition:background .12s;
+    }
+    .sop-item:hover { background:var(--dt-green-lt); }
+    .sop-item i { color:var(--dt-green); font-size:1rem; flex-shrink:0; }
+    .sop-item .sop-num { font-size:.72rem; font-weight:700; color:var(--dt-green); }
+    .sop-item .sop-title { font-size:.82rem; color:var(--dt-navy); }
+  </style>
+</head>
+<body>
+
+<nav class="portal-nav">
+  <a href="01-dashboard.html" class="brand">
+    <i class="bi bi-mortarboard-fill" style="font-size:1.3rem;color:#fff;"></i>
+    DT-Trak Consulting <span class="badge-portal">Training Portal</span>
+  </a>
+  <div class="nav-links d-none d-md-flex">
+    <a href="01-dashboard.html"><i class="bi bi-house-fill me-1"></i>Dashboard</a>
+    <a href="02-modules.html"><i class="bi bi-collection-play me-1"></i>Modules</a>
+    <a href="05-checklist.html"><i class="bi bi-check2-square me-1"></i>Checklist</a>
+    <a href="04-resources.html" class="active"><i class="bi bi-link-45deg me-1"></i>Resources</a>
+    <a href="#"><i class="bi bi-chat-dots me-1"></i>Help</a>
+  </div>
+  <div class="nav-user">
+    <span class="d-none d-sm-inline">Tanya Fabre</span>
+    <div class="avatar">TF</div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <div style="max-width:1100px;margin:0 auto;">
+    <h1><i class="bi bi-link-45deg me-2"></i>Resources</h1>
+    <p>All systems, tools, and reference documents you need every day as a DT-Trak Medical Coder.</p>
+  </div>
+</div>
+
+<div class="resources-main">
+
+  <!-- ── Daily Work Systems ── -->
+  <div class="resource-section">
+    <h4><i class="bi bi-display" style="color:var(--dt-blue);"></i> Daily Work Systems</h4>
+    <a href="https://dt-traker.trackvia.com" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#D6E4F0;"><i class="bi bi-kanban" style="color:var(--dt-blue);"></i></div>
+      <div class="res-info">
+        <h6>DT-Coder</h6>
+        <p>dt-traker.trackvia.com · Your primary coding workspace — work queue, QA audits, notifications, stats</p>
+      </div>
+      <span class="res-badge badge-daily">Open Daily</span>
+    </a>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#F3E5F5;"><i class="bi bi-clock-history" style="color:#7B1FA2;"></i></div>
+      <div class="res-info">
+        <h6>TimeClock Plus</h6>
+        <p>Time tracking — clock in/out, cost codes, time off requests, daily notes</p>
+      </div>
+      <span class="res-badge badge-daily">Open Daily</span>
+    </a>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#E8F5E9;"><i class="bi bi-hdd-network" style="color:var(--dt-green);"></i></div>
+      <div class="res-info">
+        <h6>Royal TS</h6>
+        <p>Remote desktop client for accessing EHR systems at client facilities (NextGen, eCW, RPMS)</p>
+      </div>
+      <span class="res-badge badge-daily">Open Daily</span>
+    </a>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#FFF3E0;"><i class="bi bi-key-fill" style="color:#E65100;"></i></div>
+      <div class="res-info">
+        <h6>LastPass</h6>
+        <p>Password manager — all facility EHR credentials stored here. Access via Chrome extension or website.</p>
+      </div>
+      <span class="res-badge badge-required">Required</span>
+    </a>
+  </div>
+
+  <!-- ── EHR Systems ── -->
+  <div class="resource-section">
+    <h4><i class="bi bi-hospital" style="color:var(--dt-blue);"></i> EHR Systems by Facility</h4>
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div style="background:#fff;border-radius:10px;padding:1.1rem 1.25rem;box-shadow:0 1px 5px rgba(31,56,100,.09);">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--dt-blue);margin-bottom:.5rem;">RSBCIHI</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--dt-navy);margin-bottom:.3rem;">NextGen</div>
+          <p style="font-size:.8rem;color:var(--dt-gray);margin-bottom:.75rem;">Access via Royal TS → RSBCIHI folder → D1\username login</p>
+          <a href="#" style="font-size:.8rem;color:var(--dt-blue);font-weight:600;text-decoration:none;"><i class="bi bi-box-arrow-up-right me-1"></i>Open via Royal TS</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div style="background:#fff;border-radius:10px;padding:1.1rem 1.25rem;box-shadow:0 1px 5px rgba(31,56,100,.09);">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#7B1FA2;margin-bottom:.5rem;">NVIH</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--dt-navy);margin-bottom:.3rem;">eClinicalWorks (eCW)</div>
+          <p style="font-size:.8rem;color:var(--dt-gray);margin-bottom:.75rem;">Northern Valley Indian Health — FQHC rules apply (G0466/G0467)</p>
+          <a href="#" style="font-size:.8rem;color:var(--dt-blue);font-weight:600;text-decoration:none;"><i class="bi bi-box-arrow-up-right me-1"></i>Open via Royal TS</a>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div style="background:#fff;border-radius:10px;padding:1.1rem 1.25rem;box-shadow:0 1px 5px rgba(31,56,100,.09);">
+          <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--dt-green);margin-bottom:.5rem;">SSHWC</div>
+          <div style="font-size:1rem;font-weight:700;color:var(--dt-navy);margin-bottom:.3rem;">RPMS</div>
+          <p style="font-size:.8rem;color:var(--dt-gray);margin-bottom:.75rem;">IHS-specific system — different login flow, no D1 domain</p>
+          <a href="#" style="font-size:.8rem;color:var(--dt-blue);font-weight:600;text-decoration:none;"><i class="bi bi-box-arrow-up-right me-1"></i>Open via Royal TS</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SharePoint ── -->
+  <div class="resource-section">
+    <h4><i class="bi bi-microsoft" style="color:var(--dt-blue);"></i> SharePoint Resources</h4>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#D6E4F0;"><i class="bi bi-house" style="color:var(--dt-blue);"></i></div>
+      <div class="res-info"><h6>DT-Trak SharePoint Home</h6><p>Main portal — starting point for all SharePoint navigation</p></div>
+      <span class="res-badge badge-ref">Reference</span>
+    </a>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#D6E4F0;"><i class="bi bi-file-code" style="color:var(--dt-blue);"></i></div>
+      <div class="res-info"><h6>Coding Page</h6><p>Master DT Guidelines, Clinic Codes, Provider Affiliation Codes, How-To documents</p></div>
+      <span class="res-badge badge-daily">Open Daily</span>
+    </a>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#D6E4F0;"><i class="bi bi-journal-bookmark" style="color:var(--dt-blue);"></i></div>
+      <div class="res-info"><h6>Protocol Notes</h6><p>Facility-specific coding rules — search by date (MMDDYY). Check Add/Revised/Deleted flags.</p></div>
+      <span class="res-badge badge-daily">Open Daily</span>
+    </a>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#E2EFDA;"><i class="bi bi-mortarboard" style="color:var(--dt-green);"></i></div>
+      <div class="res-info"><h6>Education Page</h6><p>HEDIS measures, telehealth guidelines, NextGen &amp; eCW instruction documents, webinar recordings</p></div>
+      <span class="res-badge badge-ref">Reference</span>
+    </a>
+  </div>
+
+  <!-- ── Coding References ── -->
+  <div class="resource-section">
+    <h4><i class="bi bi-book" style="color:var(--dt-blue);"></i> Coding Reference Tools</h4>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#FFF3CD;"><i class="bi bi-search" style="color:#BF8F00;"></i></div>
+      <div class="res-info"><h6>3M Encoder</h6><p>Code Finder — look up ICD-10, CPT, HCPCS codes. Primary coding reference tool.</p></div>
+      <span class="res-badge badge-daily">Open Daily</span>
+    </a>
+    <a href="https://www.aapc.com" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#E8F5E9;"><i class="bi bi-award" style="color:var(--dt-green);"></i></div>
+      <div class="res-info"><h6>AAPC Member Portal</h6><p>aapc.com · CEU tracking, webinar subscriptions, certification management</p></div>
+      <span class="res-badge badge-ext">External</span>
+    </a>
+  </div>
+
+  <!-- ── SOP Library ── -->
+  <div class="resource-section">
+    <h4><i class="bi bi-file-earmark-text" style="color:var(--dt-green);"></i> SOP Library (25 Documents)</h4>
+    <div class="sop-grid">
+      <!-- POWER PAGES: Generate this list dynamically from Dataverse SOP table -->
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-01</div><div class="sop-title">New Employee Onboarding Overview</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-02</div><div class="sop-title">Outlook Email Setup &amp; HIPAA Protocol</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-03</div><div class="sop-title">TimeClock Plus Usage &amp; Cost Code Guide</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-04</div><div class="sop-title">Browser, LastPass &amp; Application Password Setup</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-05</div><div class="sop-title">SharePoint Navigation &amp; Daily Resource Guide</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-06</div><div class="sop-title">Access/Verify Process &amp; DT Help Desk Guide</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-07</div><div class="sop-title">Royal TS Remote Desktop Login &amp; Logoff</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-08</div><div class="sop-title">NextGen Patient Navigation &amp; Chart Review</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-09</div><div class="sop-title">eClinicalWorks Coding Workflow for NVIH</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-10</div><div class="sop-title">DT-Coder Daily Protocol &amp; Dashboard Guide</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-11</div><div class="sop-title">ICD-10-CM Diagnosis Code Selection Standards</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-12</div><div class="sop-title">E/M Code Selection for Outpatient Office Visits</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-13</div><div class="sop-title">Preventive Medicine &amp; Well Child Visit Coding</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-14</div><div class="sop-title">Vaccine &amp; Immunization Coding Guide</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-15</div><div class="sop-title">Common Modifier Reference Guide</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-16</div><div class="sop-title">OB &amp; Prenatal Visit Coding Protocol</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-17</div><div class="sop-title">Common IHS Diagnosis Coding Reference</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-18</div><div class="sop-title">Lab &amp; Diagnostic Procedure Coding Protocol</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-19</div><div class="sop-title">Pulling Your DT-Coder Work Queue</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-20</div><div class="sop-title">QA Audit Review &amp; Response Process</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-21</div><div class="sop-title">DT-Coder Notification &amp; Deficiency Workflow</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-22</div><div class="sop-title">Daily Protocol &amp; Morning Startup Checklist</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-23</div><div class="sop-title">Diagnosis Sequencing &amp; CPT Linking Rules</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-24</div><div class="sop-title">FQHC Coding Rules &amp; NVIH Facility Protocol</div></div></a>
+      <a href="#" class="sop-item"><i class="bi bi-file-earmark-word"></i><div><div class="sop-num">SOP-25</div><div class="sop-title">Productivity Standards &amp; Stats Tracking Guide</div></div></a>
+    </div>
+  </div>
+
+  <!-- ── Help & Support ── -->
+  <div class="resource-section">
+    <h4><i class="bi bi-headset" style="color:var(--dt-blue);"></i> Help &amp; Support</h4>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:var(--dt-navy);"><i class="bi bi-robot" style="color:#fff;"></i></div>
+      <div class="res-info"><h6>AI Training Assistant</h6><p>Ask any question about coding rules, systems, or your training. Escalates to Christy (Teams) if needed.</p></div>
+      <span class="res-badge" style="background:var(--dt-navy);color:#fff;">AI Chat</span>
+    </a>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#D6E4F0;"><i class="bi bi-ticket" style="color:var(--dt-blue);"></i></div>
+      <div class="res-info"><h6>DT Help Desk</h6><p>Submit a ticket for IT issues, system access problems, or facility access requests</p></div>
+      <span class="res-badge badge-ref">Support</span>
+    </a>
+    <a href="#" target="_blank" class="resource-card">
+      <div class="resource-icon" style="background:#E2EFDA;"><i class="bi bi-microsoft-teams" style="color:var(--dt-green);"></i></div>
+      <div class="res-info"><h6>Microsoft Teams — Coding Team</h6><p>Coding Team channels: General, Compliance, Education, Protocol Notes. Message Christy for trainer questions.</p></div>
+      <span class="res-badge badge-ref">Team Chat</span>
+    </a>
+  </div>
+
+</div>
+
+<footer style="text-align:center;padding:1.5rem;font-size:.75rem;color:#6C757D;border-top:1px solid #DEE2E6;margin-top:1rem;">
+  DT-Trak Consulting, Inc. · Medical Coder Training Portal · HIPAA Compliant
+</footer>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
