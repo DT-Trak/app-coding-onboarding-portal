@@ -1,0 +1,151 @@
+# =============================================================================
+# DT-Trak — composite .gitignore (docs + typical dev stacks)
+# =============================================================================
+
+docs/**
+project-template/**
+sop/**
+test-results/**
+fireflies-workflow.md
+github-desktop-quickstart.md
+why-claude-code.md
+working-with-claude-code.md
+
+
+# --- Secrets & environment (never commit) ---
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.p12
+*.pfx
+*.cer
+*.crt
+*.key
+!*.key.md
+secrets/
+**/credentials.json
+**/service-account*.json
+**/google-services.json
+**/GoogleService-Info.plist
+.netrc
+.npmrc
+
+# --- Tool / session output under repo (exclude dumps; keep curated examples) ---
+# Without the negated lines below, Git would ignore the whole tree under
+# mnt/user-data/outputs/ — including examples/ (see README callout).
+/mnt/user-data/outputs/**
+!/mnt/user-data/outputs/examples/
+!/mnt/user-data/outputs/examples/**
+
+# --- OS junk ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# --- Editors & IDEs ---
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# --- Cursor (uncomment if you never commit anything under .cursor/, e.g. .cursor/rules) ---
+# .cursor/**
+
+# --- VS Code (optional: uncomment if no shared workspace settings are committed) ---
+# .vscode/*
+# !.vscode/extensions.json
+# !.vscode/settings.json
+
+# --- Node / JavaScript ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.npm
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+package-lock.json.bak
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.venv/
+venv/
+ENV/
+.envrc
+
+# --- pytest / coverage / mypy ---
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.hypothesis/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Terraform / infra state ---
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+*.tfvars
+!*.tfvars.example
+
+# --- Docker ---
+*.log
+
+# --- Misc build / caches ---
+.cache/
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+
+# --- Certificates & keystores (additional) ---
+*.jks
+*.keystore
+*.truststore
+
+# --- Local AI / embeddings caches (if added later) ---
+.chroma/
+*.sqlite3-journal
